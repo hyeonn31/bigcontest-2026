@@ -1,0 +1,11 @@
+shinhan1_daily_region_all.csv shape=(368, 4)
+shinhan1_daily_region_consumer_only.csv shape=(368, 4)
+shinhan2_daily_region.csv shape=(368, 4)
+shinhan2_daily_region_visitor_type.csv shape=(1104, 5)
+
+visitor_type value_counts:
+visitor_type
+외부방문객    1434377
+지역주민      352179
+정보없음       20244
+Name: count, dtype: int64

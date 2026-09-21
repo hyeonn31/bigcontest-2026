@@ -1,0 +1,13 @@
+# 대회 제공 원본 데이터 (재배포 제한 + 용량 큼: 신한카드 127MB는 GitHub 100MB 제한 초과)
+data/shinhan_card/
+data/sk_flow_pop/
+data/weather/
+
+# 파이썬/편집기 부산물
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.vscode/
+.obsidian/
+.DS_Store
+Thumbs.db

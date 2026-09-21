@@ -1,0 +1,56 @@
+핵심 소비(세금공과금·ZZ_나머지 제외) 기준. 차이 = (플래그일 평균 지수) - (그 외 날 평균 지수).
+무작위로 날짜를 섞는 순열검정(10,000회), 양측 p값. 검정을 여러 개 돌렸으므로 p<0.05 하나하나를 그대로 믿으면 안 됨
+
+[A] 전체 날짜
+region           flag          series  n_flag_days  diff_in_index  p_value
+강원 춘천시 heavy_rain_day         s2c_amt           18         -0.062   0.0009
+강원 춘천시 heavy_rain_day   s2c_local_amt           18         -0.038   0.0672
+강원 춘천시 heavy_rain_day s2c_visitor_amt           18         -0.165   0.0003
+강원 춘천시       rain_day         s2c_amt           48         -0.051   0.0000
+강원 춘천시       rain_day   s2c_local_amt           48         -0.046   0.0005
+강원 춘천시       rain_day s2c_visitor_amt           48         -0.074   0.0101
+강원 춘천시       heat_day         s2c_amt           24          0.021   0.1945
+강원 춘천시       heat_day   s2c_local_amt           24          0.019   0.2971
+강원 춘천시       heat_day s2c_visitor_amt           24          0.033   0.3809
+강원 춘천시 tropical_night         s2c_amt            5          0.039   0.2336
+강원 춘천시 tropical_night   s2c_local_amt            5          0.033   0.3300
+강원 춘천시 tropical_night s2c_visitor_amt            5          0.075   0.3213
+서울 강남구 heavy_rain_day         s2c_amt           15         -0.081   0.0409
+서울 강남구 heavy_rain_day   s2c_local_amt           15         -0.078   0.0296
+서울 강남구 heavy_rain_day s2c_visitor_amt           15         -0.083   0.0798
+서울 강남구       rain_day         s2c_amt           49         -0.040   0.0967
+서울 강남구       rain_day   s2c_local_amt           49         -0.049   0.0244
+서울 강남구       rain_day s2c_visitor_amt           49         -0.032   0.2681
+서울 강남구       heat_day         s2c_amt           24          0.023   0.4673
+서울 강남구       heat_day   s2c_local_amt           24          0.024   0.4020
+서울 강남구       heat_day s2c_visitor_amt           24          0.023   0.5442
+서울 강남구 tropical_night         s2c_amt           44          0.026   0.3252
+서울 강남구 tropical_night   s2c_local_amt           44          0.022   0.3431
+서울 강남구 tropical_night s2c_visitor_amt           44          0.028   0.3550
+
+[B] 공휴일/연휴 제외 (8/15, 10/3~10/9, 12/25)
+region           flag          series  n_flag_days  diff_in_index  p_value
+강원 춘천시 heavy_rain_day         s2c_amt           18         -0.062   0.0001
+강원 춘천시 heavy_rain_day   s2c_local_amt           18         -0.043   0.0062
+강원 춘천시 heavy_rain_day s2c_visitor_amt           18         -0.149   0.0000
+강원 춘천시       rain_day         s2c_amt           45         -0.044   0.0001
+강원 춘천시       rain_day   s2c_local_amt           45         -0.033   0.0040
+강원 춘천시       rain_day s2c_visitor_amt           45         -0.096   0.0000
+강원 춘천시       heat_day         s2c_amt           24          0.022   0.1418
+강원 춘천시       heat_day   s2c_local_amt           24          0.016   0.2701
+강원 춘천시       heat_day s2c_visitor_amt           24          0.050   0.0744
+강원 춘천시 tropical_night         s2c_amt            5          0.039   0.1826
+강원 춘천시 tropical_night   s2c_local_amt            5          0.029   0.3251
+강원 춘천시 tropical_night s2c_visitor_amt            5          0.098   0.0947
+서울 강남구 heavy_rain_day         s2c_amt           14         -0.043   0.1909
+서울 강남구 heavy_rain_day   s2c_local_amt           14         -0.039   0.1270
+서울 강남구 heavy_rain_day s2c_visitor_amt           14         -0.046   0.2788
+서울 강남구       rain_day         s2c_amt           46         -0.028   0.1538
+서울 강남구       rain_day   s2c_local_amt           46         -0.035   0.0253
+서울 강남구       rain_day s2c_visitor_amt           46         -0.022   0.3988
+서울 강남구       heat_day         s2c_amt           24          0.016   0.5421
+서울 강남구       heat_day   s2c_local_amt           24          0.016   0.4285
+서울 강남구       heat_day s2c_visitor_amt           24          0.017   0.6332
+서울 강남구 tropical_night         s2c_amt           44          0.019   0.3705
+서울 강남구 tropical_night   s2c_local_amt           44          0.014   0.3742
+서울 강남구 tropical_night s2c_visitor_amt           44          0.022   0.4252

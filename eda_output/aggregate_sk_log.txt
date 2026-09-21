@@ -1,0 +1,3 @@
+sk_age_region_month.csv -> C:\Users\user\Downloads\SH\bigcontest\data\processed\sk_age_region_month.csv  shape=(12, 15)
+sk_time_region_month.csv -> C:\Users\user\Downloads\SH\bigcontest\data\processed\sk_time_region_month.csv  shape=(12, 27)
+sk_wkdy_region_month.csv -> C:\Users\user\Downloads\SH\bigcontest\data\processed\sk_wkdy_region_month.csv  shape=(12, 10)

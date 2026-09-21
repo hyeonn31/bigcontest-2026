@@ -1,0 +1,97 @@
+=== merged_daily shape === (368, 42)
+날짜 범위: 2025-07-01 ~ 2025-12-31
+
+=== 기상 결측(NaN) 날짜 ===
+Empty DataFrame
+Columns: [date, region]
+Index: []
+
+=== SK baseline 결측 개수 === 0
+
+=== 기상 하루 관측시간 수 분포 (24여야 정상) ===
+n_hours
+24    368
+Name: count, dtype: int64
+
+=== 지역별 기후 이벤트 일수 ===
+        heat_day  tropical_night  cold_day  rain_day  heavy_rain_day
+region                                                              
+강원 춘천시        24               5         4        48              18
+서울 강남구        24              44         1        49              15
+
+=== 지역별 기온/강수 요약 ===
+region                강원 춘천시      서울 강남구
+temp_mean  count  184.000000  184.000000
+           mean    16.028353   17.872101
+           std     10.881903   10.655679
+           min     -8.879167   -8.300000
+           25%      5.844792    8.728125
+           50%     19.152083   20.770833
+           75%     26.282292   27.616667
+           max     29.962500   32.729167
+temp_max   count  184.000000  184.000000
+           mean    21.270652   21.770652
+           std     10.795673   10.537459
+           min     -3.800000   -4.000000
+           25%     14.575000   14.250000
+           50%     23.300000   24.100000
+           75%     31.125000   31.300000
+           max     36.900000   37.600000
+temp_min   count  184.000000  184.000000
+           mean    11.714674   14.435326
+           std     11.527115   11.165775
+           min    -13.300000  -11.800000
+           25%      0.200000    4.450000
+           50%     15.800000   17.550000
+           75%     22.500000   24.450000
+           max     25.900000   29.300000
+precip_sum count  184.000000  184.000000
+           mean     6.127174    6.539130
+           std     15.534296   17.098208
+           min      0.000000    0.000000
+           25%      0.000000    0.000000
+           50%      0.000000    0.000000
+           75%      1.100000    1.600000
+           max     94.700000  126.700000
+
+=== [탐색용] 기후 플래그별 소비지수 평균 (1.0 = 같은 지역·월·요일 평균). 표본 수 작으면 해석 주의 ===
+
+-- heat_day --
+                 s2_amt_idx  s2c_amt_idx  s2c_local_amt_idx  s2c_visitor_amt_idx  n_days
+region heat_day                                                                         
+강원 춘천시 False          0.998        0.997              0.998                0.996     160
+       True           1.014        1.018              1.017                1.029      24
+서울 강남구 False          0.994        0.997              0.997                0.997     160
+       True           1.042        1.020              1.021                1.020      24
+
+-- tropical_night --
+                       s2_amt_idx  s2c_amt_idx  s2c_local_amt_idx  s2c_visitor_amt_idx  n_days
+region tropical_night                                                                         
+강원 춘천시 False                0.999        0.999              0.999                0.998     179
+       True                 1.034        1.038              1.033                1.073       5
+서울 강남구 False                0.991        0.994              0.995                0.993     140
+       True                 1.030        1.019              1.017                1.021      44
+
+-- cold_day --
+                 s2_amt_idx  s2c_amt_idx  s2c_local_amt_idx  s2c_visitor_amt_idx  n_days
+region cold_day                                                                         
+강원 춘천시 False          0.996        0.999              0.999                0.998     180
+       True           1.192        1.047              1.041                1.083       4
+서울 강남구 False          0.998        0.998              0.999                0.997     183
+       True           1.308        1.297              1.107                1.458       1
+
+-- rain_day --
+                 s2_amt_idx  s2c_amt_idx  s2c_local_amt_idx  s2c_visitor_amt_idx  n_days
+region rain_day                                                                         
+강원 춘천시 False          0.997        1.013              1.012                1.019     136
+       True           1.008        0.963              0.966                0.945      48
+서울 강남구 False          1.010        1.011              1.013                1.009     135
+       True           0.973        0.970              0.964                0.976      49
+
+-- heavy_rain_day --
+                       s2_amt_idx  s2c_amt_idx  s2c_local_amt_idx  s2c_visitor_amt_idx  n_days
+region heavy_rain_day                                                                         
+강원 춘천시 False                1.002        1.006              1.004                1.016     166
+       True                 0.982        0.944              0.965                0.851      18
+서울 강남구 False                1.007        1.007              1.006                1.007     169
+       True                 0.922        0.926              0.928                0.924      15

@@ -1,0 +1,45 @@
+=== shape ===
+(98129, 16)
+['STD_YM', 'BLOCK_CD', 'X_COORD', 'Y_COORD', 'MAN_FLOW_POP_CNT_10G', 'MAN_FLOW_POP_CNT_20G', 'MAN_FLOW_POP_CNT_30G', 'MAN_FLOW_POP_CNT_40G', 'MAN_FLOW_POP_CNT_50G', 'MAN_FLOW_POP_CNT_60GU', 'WMAN_FLOW_POP_CNT_10G', 'WMAN_FLOW_POP_CNT_20G', 'WMAN_FLOW_POP_CNT_30G', 'WMAN_FLOW_POP_CNT_40G', 'WMAN_FLOW_POP_CNT_50G', 'WMAN_FLOW_POP_CNT_60GU']
+
+=== BLOCK_CD 고유값 개수 ===
+2793
+
+=== 격자 개수 (고유 좌표) ===
+98129
+
+=== X_COORD 기술통계 ===
+count    9.812900e+04
+mean     1.009994e+06
+std      2.203517e+04
+min      9.566340e+05
+25%      1.008734e+06
+50%      1.018384e+06
+75%      1.022784e+06
+max      1.043384e+06
+Name: X_COORD, dtype: float64
+
+=== Y_COORD 기술통계 ===
+count    9.812900e+04
+mean     1.979090e+06
+std      1.727945e+04
+min      1.939779e+06
+25%      1.972829e+06
+50%      1.983179e+06
+75%      1.991129e+06
+max      2.008279e+06
+Name: Y_COORD, dtype: float64
+
+=== X_COORD 정렬 후 가장 큰 간격 5개 (인덱스: 값) ===
+gap= 33850.0  at value= 1000583.991787  prev= 966733.991787
+gap= 300.0  at value= 1042933.991787  prev= 1042633.991787
+gap= 150.0  at value= 1043283.991787  prev= 1043133.991787
+gap= 100.0  at value= 1043083.991787  prev= 1042983.991787
+gap= 50.0  at value= 1011333.991787  prev= 1011283.991787
+
+=== Y_COORD 정렬 후 가장 큰 간격 5개 ===
+gap= 15450.0  at value= 1964029.147389  prev= 1948579.147389
+gap= 350.0  at value= 2007829.147389  prev= 2007479.147389
+gap= 350.0  at value= 2008279.147389  prev= 2007929.147389
+gap= 250.0  at value= 2007279.147389  prev= 2007029.147389
+gap= 150.0  at value= 2007479.147389  prev= 2007329.147389
