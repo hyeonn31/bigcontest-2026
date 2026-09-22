@@ -26,3 +26,23 @@
 ## 진행 상황
 
 세부 내용은 [notes.md](notes.md) 참고.
+
+## 사용 기법·도구 (기술 스택 요약)
+
+**개발 환경**: Python 3.8, pandas, numpy, scipy, statsmodels, matplotlib
+
+**데이터 출처**: 신한카드 소비 데이터(2종), SK텔레콤 유동인구, 기상청 ASOS 시간자료 — 위 "데이터셋 구조" 참고
+
+**분석 파이프라인 (실무 데이터분석 워크플로우 순서)**:
+
+| 단계 | 기법 | 관련 스크립트 |
+| --- | --- | --- |
+| 전처리 | 인코딩 변환(CP949→UTF-8), 좌표 격자→행정구역 공간 집계, 날짜×지역 단위 병합 | `aggregate_*.py`, `build_merged_daily.py` |
+| EDA | 결측치/분포 확인, 로그변환(우측 치우침 분포 대응) | `eda_shinhan1.py`, `eda_shinhan2.py` |
+| 가설검정 | OLS 로그선형회귀 + **HAC(자기상관 보정) 표준오차** | `industry_analysis.py`, `compare_candidates.py` |
+| 다중검정 보정 | **FDR(Benjamini-Hochberg)** — 업종 수십 개를 동시에 검정할 때 우연한 유의성 걸러냄 | `industry_analysis.py` |
+| 그룹 간 차이 검정 | 회귀에 **상호작용항(interaction term)** 추가해 두 그룹 계수 차이를 직접 검정 | `region_interaction_test.py` |
+| 강건성 점검 | 임계값 민감도 분석(비 기준 15~40mm), 시차(lag) 효과 검정 | `robustness_*.py` |
+| 시각화 | 95% 신뢰구간 오차막대 그래프 | `plot_*.py` |
+
+이 프로젝트는 **예측 모델(머신러닝)이 아니라 통계적 인과·연관성 추론(계량경제학적 회귀분석)** 중심으로 진행함 — "비가 오면 소비가 실제로 줄어드는가"처럼 요인의 영향을 검증하는 문제라 이 방식을 선택함.
