@@ -1,0 +1,19 @@
+강남 vs 춘천 기후 반응 차이 — 상호작용항 검정 (baseline=강남, region_cc=1이면 춘천)
+효과(%) = (exp(계수)-1)*100. region_cc_x_* 의 부호/유의성이 '춘천이 강남보다
+얼마나 더(-) / 덜(+) 영향받는지'에 대한 직접 검정.
+
+rain_light                      -3.07%   p=0.3598
+rain_heavy                     -13.02%   p=0.0395
+heat_day                         0.36%   p=0.9138
+region_cc                      -88.48%   p=0.0000
+region_cc_x_rain_light           0.42%   p=0.9208
+region_cc_x_rain_heavy           5.70%   p=0.3986
+region_cc_x_heat_day            -0.86%   p=0.8334
+
+춘천 총 효과 (강남 계수 + 상호작용, 선형결합 검정):
+  춘천 rain_light              -2.66%   p=0.3075
+  춘천 rain_heavy              -8.06%   p=0.0048
+  춘천 heat_day                -0.51%   p=0.8772
+
+※ compare_candidates.py처럼 지역별로 따로 돌린 회귀 결과와 부호·크기가 일치하는지 대조할 것
+※ 유의한 region_cc_x_rain_heavy(p<0.05)가 나오면 '강남/춘천 비대칭이 우연이 아니다'를 뒷받침하는 근거가 됨
