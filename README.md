@@ -21,7 +21,8 @@
 ## 원본 데이터
 
 대회 제공 원본(SK텔레콤·신한카드·기상청 CSV/TXT)은 재배포 제한과 용량 문제로 이 저장소에 포함하지 않는다 (`.gitignore`).
-스크립트는 로컬의 `data/shinhan_card/`, `data/sk_flow_pop/`, `data/weather/`에 원본이 있다는 전제로 작성되어 있고, 경로는 작성자 PC 기준 절대경로다.
+스크립트는 로컬의 `data/shinhan_card/`, `data/sk_flow_pop/`, `data/weather/`에 원본이 있다는 전제로 작성되어 있다. 경로는 스크립트 위치 기준 상대경로라 저장소를 어디에 두든 그대로 실행된다.
+회귀 분석 스크립트는 공통 모듈 `scripts/common.py`(데이터 로드 `load_merged`, 로그선형 OLS+HAC `fit_hac`, %효과·95% CI 변환 `pct_ci`)를 공유한다.
 
 ## 진행 상황
 

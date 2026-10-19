@@ -10,37 +10,23 @@
 import os
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 from scipy.stats import spearmanr
+from common import BASE, load_merged, fit_hac
 
-BASE = r"C:\Users\user\Downloads\SH\bigcontest"
 OUT_TXT = os.path.join(BASE, "eda_output", "compare_candidates.txt")
 EXCL = ["세금공과금", "ZZ_나머지"]
 N_PERM = 10000
 rng = np.random.default_rng(42)
 
-m = pd.read_csv(os.path.join(BASE, "data", "processed", "merged_daily.csv"), encoding="utf-8-sig", parse_dates=["date"])
-m["rain_light"] = (m["precip_sum"] >= 1) & (m["precip_sum"] < 30)
-m["rain_heavy"] = m["precip_sum"] >= 30
-m["heat_day"] = m["heat_day"].astype(bool)
-m["is_holiday"] = m["is_holiday"].astype(bool)
-
-DESIGN = {}
-for region, g in m.groupby("region"):
-    g = g.set_index("date").sort_index()
-    X = pd.get_dummies(g[["month", "weekday"]].astype(str), drop_first=True, dtype=float)
-    for c in ["is_holiday", "rain_light", "rain_heavy", "heat_day"]:
-        X[c] = g[c].astype(float)
-    DESIGN[region] = sm.add_constant(X)
-
+m = load_merged()
+BY_REGION = {r: g.set_index("date").sort_index() for r, g in m.groupby("region")}
 TERMS = ["rain_light", "rain_heavy", "heat_day"]
 
 
 def fit_log(region, ylog):
     """이미 로그를 취한 계열을 회귀. 계수는 (exp-1)*100 % 로 환산"""
     ylog = ylog.replace([np.inf, -np.inf], np.nan).dropna()
-    X = DESIGN[region].loc[ylog.index]
-    res = sm.OLS(ylog, X).fit(cov_type="HAC", cov_kwds={"maxlags": 3})
+    res = fit_hac(BY_REGION[region], ylog, ["is_holiday"] + TERMS)
     out = {"n_days": len(ylog)}
     for t in TERMS:
         out[f"{t}_pct"] = (np.exp(res.params[t]) - 1) * 100
@@ -149,7 +135,7 @@ p("\n" + "-" * 10, "(a) 분류 없는 대리 지표: 업종별 주말/평일 소
 hol = m.drop_duplicates("date").set_index("date")["is_holiday"]
 ind = core.groupby(["MCT_SGG_CD", "MCT_RY_CD", "date"])["TS_AT"].sum().reset_index()
 ind["holiday"] = ind["date"].map(hol)
-ind = ind[~ind["holiday"]]
+ind = ind[ind["holiday"] == 0]
 ind["wkend"] = ind["date"].dt.dayofweek >= 5
 wr = ind.groupby(["MCT_SGG_CD", "MCT_RY_CD", "wkend"])["TS_AT"].mean().unstack("wkend")
 wr["weekend_ratio"] = wr[True] / wr[False]

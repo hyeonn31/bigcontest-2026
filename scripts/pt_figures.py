@@ -9,12 +9,10 @@
 """
 import os
 import numpy as np
-import pandas as pd
-import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import matplotlib
+from common import BASE, load_merged, fit_hac, pct_ci
 
-BASE = r"C:\SH_Antigravity\bigcontest"
 FIG_DIR = os.path.join(BASE, "figures")
 
 matplotlib.rcParams["font.family"] = "Malgun Gothic"
@@ -25,25 +23,11 @@ RED = "#D45B5B"    # 타 시도 / 강조
 GRAY = "#8C8C8C"
 BG = "#FFFFFF"
 
-m = pd.read_csv(os.path.join(BASE, "data", "processed", "merged_daily.csv"),
-                 encoding="utf-8-sig", parse_dates=["date"])
-m["is_holiday"] = m["is_holiday"].astype(float)
-m["rain_light"] = ((m["precip_sum"] >= 1) & (m["precip_sum"] < 30)).astype(float)
-m["rain_heavy"] = (m["precip_sum"] >= 30).astype(float)
+m = load_merged()
 
 
 def fit_ci(g, col, term):
-    y = np.log(g[col])
-    X = pd.get_dummies(g[["month", "weekday"]].astype(str), drop_first=True, dtype=float)
-    for c in ["is_holiday", "rain_light", "rain_heavy"]:
-        X[c] = g[c]
-    X = sm.add_constant(X)
-    res = sm.OLS(y, X).fit(cov_type="HAC", cov_kwds={"maxlags": 3})
-    coef, se, pv = res.params[term], res.bse[term], res.pvalues[term]
-    pct = (np.exp(coef) - 1) * 100
-    lo = (np.exp(coef - 1.96 * se) - 1) * 100
-    hi = (np.exp(coef + 1.96 * se) - 1) * 100
-    return pct, lo, hi, pv
+    return pct_ci(fit_hac(g, np.log(g[col]), ["is_holiday", "rain_light", "rain_heavy"]), term)
 
 
 # =============== 5-1. 지역 전체 개관 (도입부) ===============
@@ -109,15 +93,10 @@ plt.close()
 THRESHOLDS = [15, 20, 25, 30, 35, 40]
 local_pcts, vis_pcts = [], []
 for t in THRESHOLDS:
-    rh = (g["precip_sum"] >= t).astype(float)
-    rm = ((g["precip_sum"] >= 1) & (g["precip_sum"] < t)).astype(float)
-    X = pd.get_dummies(g[["month", "weekday"]].astype(str), drop_first=True, dtype=float)
-    X["is_holiday"] = g["is_holiday"]; X["rain_mid"] = rm; X["rain_heavy"] = rh
-    X = sm.add_constant(X)
+    gt = g.assign(rain_mid=(g["precip_sum"] >= 1) & (g["precip_sum"] < t), rain_heavy=g["precip_sum"] >= t)
     for col, store in [("s2c_local_amt", local_pcts), ("s2c_visitor_amt", vis_pcts)]:
-        y = np.log(g[col])
-        res = sm.OLS(y, X).fit(cov_type="HAC", cov_kwds={"maxlags": 3})
-        store.append((np.exp(res.params["rain_heavy"]) - 1) * 100)
+        res = fit_hac(gt, np.log(gt[col]), ["is_holiday", "rain_mid", "rain_heavy"])
+        store.append(pct_ci(res, "rain_heavy")[0])
 
 fig, ax = plt.subplots(figsize=(8, 5.5))
 ax.plot(THRESHOLDS, local_pcts, "o-", color=BLUE, linewidth=3, markersize=9, label="지역주민")

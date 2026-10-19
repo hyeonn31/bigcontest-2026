@@ -1,11 +1,10 @@
 import os
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 from scipy.stats import spearmanr
 from statsmodels.stats.multitest import multipletests
+from common import BASE, load_merged, fit_hac
 
-BASE = r"C:\Users\user\Downloads\SH\bigcontest"
 OUT_TXT = os.path.join(BASE, "eda_output", "industry_analysis.txt")
 OUT_CSV = os.path.join(BASE, "data", "processed", "industry_rain_effects.csv")
 EXCL = ["세금공과금", "ZZ_나머지"]
@@ -14,20 +13,8 @@ MIN_MEAN_CNT = 30      # 하루 평균 결제건수 30건 이상
 Q_THRESH = 0.10        # FDR 기준
 
 # ---------- 공통: 날짜 특징 + 회귀 ----------
-m = pd.read_csv(os.path.join(BASE, "data", "processed", "merged_daily.csv"), encoding="utf-8-sig", parse_dates=["date"])
-m["rain_light"] = (m["precip_sum"] >= 1) & (m["precip_sum"] < 30)
-m["rain_heavy"] = m["precip_sum"] >= 30
-m["heat_day"] = m["heat_day"].astype(bool)
-m["is_holiday"] = m["is_holiday"].astype(bool)
-
-DESIGN = {}
-for region, g in m.groupby("region"):
-    g = g.set_index("date").sort_index()
-    X = pd.get_dummies(g[["month", "weekday"]].astype(str), drop_first=True, dtype=float)
-    for c in ["is_holiday", "rain_light", "rain_heavy", "heat_day"]:
-        X[c] = g[c].astype(float)
-    DESIGN[region] = sm.add_constant(X)
-
+m = load_merged()
+BY_REGION = {r: g.set_index("date").sort_index() for r, g in m.groupby("region")}
 TERMS = ["rain_light", "rain_heavy", "heat_day"]
 
 
@@ -35,8 +22,7 @@ def fit(region, y):
     """log(y) ~ 월+요일+공휴일+약한비+호우+폭염, HAC(3일) 표준오차. y는 날짜 인덱스 Series"""
     y = y.dropna()
     y = y[y > 0]
-    X = DESIGN[region].loc[y.index]
-    res = sm.OLS(np.log(y), X).fit(cov_type="HAC", cov_kwds={"maxlags": 3})
+    res = fit_hac(BY_REGION[region], np.log(y), ["is_holiday"] + TERMS)
     out = {"n_days": len(y)}
     for t in TERMS:
         out[f"{t}_pct"] = (np.exp(res.params[t]) - 1) * 100

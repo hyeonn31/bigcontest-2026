@@ -9,21 +9,17 @@
 """
 import os
 import numpy as np
-import pandas as pd
-import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import matplotlib
+from common import BASE, load_merged, fit_hac, pct_ci
 
-BASE = r"C:\SH_Antigravity\bigcontest"
 OUT_FIG = os.path.join(BASE, "figures", "robustness_rain_threshold.png")
 OUT_TXT = os.path.join(BASE, "eda_output", "robustness_rain_threshold.txt")
 
 matplotlib.rcParams["font.family"] = "Malgun Gothic"
 matplotlib.rcParams["axes.unicode_minus"] = False
 
-m = pd.read_csv(os.path.join(BASE, "data", "processed", "merged_daily.csv"),
-                 encoding="utf-8-sig", parse_dates=["date"])
-m["is_holiday"] = m["is_holiday"].astype(float)
+m = load_merged()
 
 THRESHOLDS = [15, 20, 25, 30, 35, 40]
 CUSTOMER_COLS = {"동일 시도 거주자": "s2c_local_amt", "타 시도 거주자": "s2c_visitor_amt"}
@@ -47,26 +43,15 @@ results = {c: {"pct": [], "lo": [], "hi": []} for c in CUSTOMER_COLS}
 n_days_list = []
 
 for t in THRESHOLDS:
-    rain_heavy = (g["precip_sum"] >= t).astype(float)
-    rain_mid = ((g["precip_sum"] >= 1) & (g["precip_sum"] < t)).astype(float)
-    n_heavy = int(rain_heavy.sum())
+    gt = g.assign(rain_mid=(g["precip_sum"] >= 1) & (g["precip_sum"] < t), rain_heavy=g["precip_sum"] >= t)
+    n_heavy = int(gt["rain_heavy"].sum())
     n_days_list.append(n_heavy)
-
-    X = pd.get_dummies(g[["month", "weekday"]].astype(str), drop_first=True, dtype=float)
-    X["is_holiday"] = g["is_holiday"]
-    X["rain_mid"] = rain_mid
-    X["rain_heavy"] = rain_heavy
-    X = sm.add_constant(X)
 
     row = [f"{t:>3d}mm", f"n={n_heavy:2d}"]
     pcts = {}
     for cust, col in CUSTOMER_COLS.items():
-        y = np.log(g[col])
-        res = sm.OLS(y, X).fit(cov_type="HAC", cov_kwds={"maxlags": 3})
-        coef, se, pv = res.params["rain_heavy"], res.bse["rain_heavy"], res.pvalues["rain_heavy"]
-        pct = (np.exp(coef) - 1) * 100
-        lo = (np.exp(coef - 1.96 * se) - 1) * 100
-        hi = (np.exp(coef + 1.96 * se) - 1) * 100
+        res = fit_hac(gt, np.log(gt[col]), ["is_holiday", "rain_mid", "rain_heavy"])
+        pct, lo, hi, pv = pct_ci(res, "rain_heavy")
         results[cust]["pct"].append(pct)
         results[cust]["lo"].append(lo)
         results[cust]["hi"].append(hi)

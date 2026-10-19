@@ -5,17 +5,11 @@
 """
 import os
 import numpy as np
-import pandas as pd
-import statsmodels.api as sm
+from common import BASE, load_merged, fit_hac, pct_ci
 
-BASE = r"C:\SH_Antigravity\bigcontest"
 OUT_TXT = os.path.join(BASE, "eda_output", "robustness_heat_threshold.txt")
 
-m = pd.read_csv(os.path.join(BASE, "data", "processed", "merged_daily.csv"),
-                 encoding="utf-8-sig", parse_dates=["date"])
-m["is_holiday"] = m["is_holiday"].astype(float)
-m["rain_light"] = ((m["precip_sum"] >= 1) & (m["precip_sum"] < 30)).astype(float)
-m["rain_heavy"] = (m["precip_sum"] >= 30).astype(float)
+m = load_merged()
 
 THRESHOLDS = [30, 31, 32, 33, 34, 35]
 
@@ -36,14 +30,8 @@ for t in THRESHOLDS:
     row = [f"{t}℃"]
     for region in ["서울 강남구", "강원 춘천시"]:
         g = m[m["region"] == region].set_index("date").sort_index()
-        y = np.log(g["s2c_amt"])
-        X = pd.get_dummies(g[["month", "weekday"]].astype(str), drop_first=True, dtype=float)
-        X["is_holiday"] = g["is_holiday"]; X["rain_light"] = g["rain_light"]; X["rain_heavy"] = g["rain_heavy"]
-        X["heat_t"] = g["heat_t"]
-        X = sm.add_constant(X)
-        res = sm.OLS(y, X).fit(cov_type="HAC", cov_kwds={"maxlags": 3})
-        pct = (np.exp(res.params["heat_t"]) - 1) * 100
-        pv = res.pvalues["heat_t"]
+        res = fit_hac(g, np.log(g["s2c_amt"]), ["is_holiday", "rain_light", "rain_heavy", "heat_t"])
+        pct, _, _, pv = pct_ci(res, "heat_t")
         row.append(f"{pct:6.1f}% (p={pv:.3f})")
     p(f"{row[0]:>8} | {row[1]:>18} | {row[2]:>18}")
 

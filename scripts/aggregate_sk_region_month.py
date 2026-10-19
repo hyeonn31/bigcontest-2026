@@ -2,8 +2,10 @@ import pandas as pd
 import glob
 import os
 
-DATA_DIR = r"C:\Users\user\Downloads\SH\bigcontest\data\sk_flow_pop"
-OUT_DIR = r"C:\Users\user\Downloads\SH\bigcontest\data\processed"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+DATA_DIR = BASE + r"\data\sk_flow_pop"
+OUT_DIR = BASE + r"\data\processed"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 X_SPLIT = 983000  # X_COORD < 983000 => 서울 강남구, else 강원 춘천시
@@ -42,7 +44,7 @@ for prefix, out_name in [
     result, out_path = aggregate(prefix, out_name)
     results_log.append((out_name, out_path, result.shape))
 
-log_path = os.path.join(r"C:\Users\user\Downloads\SH\bigcontest\eda_output", 'aggregate_sk_log.txt')
+log_path = os.path.join(BASE + r"\eda_output", 'aggregate_sk_log.txt')
 with open(log_path, 'w', encoding='utf-8') as f:
     for out_name, out_path, shape in results_log:
         f.write(f"{out_name} -> {out_path}  shape={shape}\n")

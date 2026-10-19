@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 
-BASE = r"C:\Users\user\Downloads\SH\bigcontest"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 f = open(os.path.join(BASE, "eda_output", "audit_checks2.txt"), "w", encoding="utf-8")
 
 

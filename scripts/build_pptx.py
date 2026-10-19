@@ -11,7 +11,7 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
 
-BASE = r"C:\SH_Antigravity\bigcontest"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIG = os.path.join(BASE, "figures")
 OUT = os.path.join(BASE, "PT_slides.pptx")
 

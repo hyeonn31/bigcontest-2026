@@ -2,7 +2,7 @@ import glob
 import os
 import pandas as pd
 
-BASE = r"C:\Users\user\Downloads\SH\bigcontest"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROC = os.path.join(BASE, "data", "processed")
 WEATHER_FILES = sorted(glob.glob(os.path.join(BASE, "data", "weather", "OBS_ASOS_TIM_*.csv")))
 LOG = os.path.join(BASE, "eda_output", "merge_log.txt")

@@ -7,42 +7,26 @@ compare_candidates.py는 log(타시도/동일시도) "비율"만 검정했음. �
 """
 import os
 import numpy as np
-import pandas as pd
-import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import matplotlib
+from common import BASE, load_merged, fit_hac, pct_ci
 
-BASE = r"C:\SH_Antigravity\bigcontest"
 OUT_FIG = os.path.join(BASE, "figures", "visitor_local_rain_effect_ci.png")
 
 matplotlib.rcParams["font.family"] = "Malgun Gothic"
 matplotlib.rcParams["axes.unicode_minus"] = False
 
-m = pd.read_csv(os.path.join(BASE, "data", "processed", "merged_daily.csv"),
-                 encoding="utf-8-sig", parse_dates=["date"])
-m["rain_light"] = ((m["precip_sum"] >= 1) & (m["precip_sum"] < 30)).astype(float)
-m["rain_heavy"] = (m["precip_sum"] >= 30).astype(float)
-m["heat_day"] = m["heat_day"].astype(float)
-m["is_holiday"] = m["is_holiday"].astype(float)
+m = load_merged()
 
 CUSTOMER_COLS = {"동일 시도 거주자": "s2c_local_amt", "타 시도 거주자": "s2c_visitor_amt"}
 
 results = {}  # (region, customer, term) -> (pct, lo, hi, p)
 for region, g in m.groupby("region"):
     g = g.set_index("date").sort_index()
-    X = pd.get_dummies(g[["month", "weekday"]].astype(str), drop_first=True, dtype=float)
-    for c in ["is_holiday", "rain_light", "rain_heavy", "heat_day"]:
-        X[c] = g[c].astype(float)
-    X = sm.add_constant(X)
     for cust, col in CUSTOMER_COLS.items():
-        y = np.log(g[col])
-        res = sm.OLS(y, X).fit(cov_type="HAC", cov_kwds={"maxlags": 3})
+        res = fit_hac(g, np.log(g[col]), ["is_holiday", "rain_light", "rain_heavy", "heat_day"])
         for term in ["rain_light", "rain_heavy"]:
-            coef, se = res.params[term], res.bse[term]
-            pct = (np.exp(coef) - 1) * 100
-            lo = (np.exp(coef - 1.96 * se) - 1) * 100
-            hi = (np.exp(coef + 1.96 * se) - 1) * 100
-            results[(region, cust, term)] = (pct, lo, hi, res.pvalues[term])
+            results[(region, cust, term)] = pct_ci(res, term)
 
 # ---- 그래프: 2개 패널(약한 비 / 호우), 각 패널에 지역x고객유형 4개 막대 ----
 fig, axes = plt.subplots(1, 2, figsize=(11, 5.5), sharey=True)

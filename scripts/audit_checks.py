@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 
-BASE = r"C:\Users\user\Downloads\SH\bigcontest"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "eda_output", "audit_checks.txt")
 f = open(OUT, "w", encoding="utf-8")
 

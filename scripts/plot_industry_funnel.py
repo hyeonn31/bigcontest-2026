@@ -5,7 +5,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-BASE = r"C:\Users\user\Downloads\SH\bigcontest"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 res = pd.read_csv(os.path.join(BASE, "data", "processed", "industry_rain_effects.csv"), encoding="utf-8-sig")
 plt.rcParams["font.family"] = "Malgun Gothic"
 plt.rcParams["axes.unicode_minus"] = False

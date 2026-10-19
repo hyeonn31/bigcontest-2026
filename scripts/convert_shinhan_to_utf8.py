@@ -1,9 +1,11 @@
 import io
 import os
 
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 FILES = [
-    r"C:\Users\user\Downloads\SH\bigcontest\data\shinhan_card\신한카드_빅콘테스트2026_데이터1.txt",
-    r"C:\Users\user\Downloads\SH\bigcontest\data\shinhan_card\신한카드_빅콘테스트2026_데이터2_수정.txt",
+    BASE + r"\data\shinhan_card\신한카드_빅콘테스트2026_데이터1.txt",
+    BASE + r"\data\shinhan_card\신한카드_빅콘테스트2026_데이터2_수정.txt",
 ]
 
 for path in FILES:

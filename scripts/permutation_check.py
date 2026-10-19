@@ -1,7 +1,8 @@
+import os
 import numpy as np
 import pandas as pd
 
-BASE = r"C:\Users\user\Downloads\SH\bigcontest"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 m_all = pd.read_csv(BASE + r"\data\processed\merged_daily.csv", encoding="utf-8-sig", parse_dates=["date"])
 m_all = m_all.dropna(subset=["temp_mean"]).copy()  # 기상 데이터가 없는 12/31 제외
 

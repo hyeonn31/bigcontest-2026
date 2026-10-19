@@ -14,7 +14,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 
-BASE = r"C:\SH_Antigravity\bigcontest"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIG = os.path.join(BASE, "figures")
 OUT_TXT = os.path.join(BASE, "eda_output", "sk_flow_characterization.txt")
 

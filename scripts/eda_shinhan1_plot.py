@@ -3,11 +3,14 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 plt.rcParams['font.family'] = 'Malgun Gothic'
 plt.rcParams['axes.unicode_minus'] = False
 
-path = r"C:\Users\user\Downloads\SH\bigcontest\data\shinhan_card\신한카드_빅콘테스트2026_데이터1.txt"
+path = BASE + r"\data\shinhan_card\신한카드_빅콘테스트2026_데이터1.txt"
 df = pd.read_csv(path, sep='\t', encoding='utf-8-sig')
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
@@ -23,6 +26,6 @@ axes[1].set_xlabel('log10(결제금액 합계)')
 axes[1].set_ylabel('빈도')
 
 plt.tight_layout()
-out_png = r"C:\Users\user\Downloads\SH\bigcontest\figures\ts_at_distribution.png"
+out_png = BASE + r"\figures\ts_at_distribution.png"
 plt.savefig(out_png, dpi=110)
 print('saved to', out_png)

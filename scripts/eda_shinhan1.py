@@ -1,7 +1,10 @@
 import pandas as pd
+import os
 
-path = r"C:\Users\user\Downloads\SH\bigcontest\data\shinhan_card\신한카드_빅콘테스트2026_데이터1.txt"
-out_path = r"C:\Users\user\Downloads\SH\bigcontest\eda_output\eda_shinhan1_result.txt"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+path = BASE + r"\data\shinhan_card\신한카드_빅콘테스트2026_데이터1.txt"
+out_path = BASE + r"\eda_output\eda_shinhan1_result.txt"
 
 df = pd.read_csv(path, sep='\t', encoding='utf-8-sig')
 

@@ -1,11 +1,13 @@
 import pandas as pd
 import os
 
-OUT_DIR = r"C:\Users\user\Downloads\SH\bigcontest\data\processed"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+OUT_DIR = BASE + r"\data\processed"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # 데이터1: 법인 포함 원본, 법인 제외본 둘 다 만든다
-path1 = r"C:\Users\user\Downloads\SH\bigcontest\data\shinhan_card\신한카드_빅콘테스트2026_데이터1.txt"
+path1 = BASE + r"\data\shinhan_card\신한카드_빅콘테스트2026_데이터1.txt"
 df1 = pd.read_csv(path1, sep='\t', encoding='utf-8-sig')
 
 agg_all = df1.groupby(['TA_YMD', 'MCT_SGG_CD'])[['TS_AT', 'USE_CNT']].sum().reset_index()
@@ -16,7 +18,7 @@ agg_consumer = df1_consumer.groupby(['TA_YMD', 'MCT_SGG_CD'])[['TS_AT', 'USE_CNT
 agg_consumer.to_csv(os.path.join(OUT_DIR, 'shinhan1_daily_region_consumer_only.csv'), index=False, encoding='utf-8-sig')
 
 # 데이터2: 법인 이미 제외됨, 고객 거주지까지 살아있는 채로 날짜x가맹점지역 집계
-path2 = r"C:\Users\user\Downloads\SH\bigcontest\data\shinhan_card\신한카드_빅콘테스트2026_데이터2_수정.txt"
+path2 = BASE + r"\data\shinhan_card\신한카드_빅콘테스트2026_데이터2_수정.txt"
 df2 = pd.read_csv(path2, sep='\t', encoding='utf-8-sig')
 
 agg2 = df2.groupby(['TA_YMD', 'MCT_SGG_CD'])[['TS_AT', 'USE_CNT']].sum().reset_index()
@@ -42,7 +44,7 @@ agg2_core.to_csv(os.path.join(OUT_DIR, 'shinhan2_daily_region_core.csv'), index=
 agg2_visitor_core = df2_core.groupby(['TA_YMD', 'MCT_SGG_CD', 'visitor_type'])[['TS_AT', 'USE_CNT']].sum().reset_index()
 agg2_visitor_core.to_csv(os.path.join(OUT_DIR, 'shinhan2_daily_region_visitor_type_core.csv'), index=False, encoding='utf-8-sig')
 
-log_path = r"C:\Users\user\Downloads\SH\bigcontest\eda_output\aggregate_shinhan_log.txt"
+log_path = BASE + r"\eda_output\aggregate_shinhan_log.txt"
 with open(log_path, 'w', encoding='utf-8') as f:
     f.write(f"shinhan1_daily_region_all.csv shape={agg_all.shape}\n")
     f.write(f"shinhan1_daily_region_consumer_only.csv shape={agg_consumer.shape}\n")

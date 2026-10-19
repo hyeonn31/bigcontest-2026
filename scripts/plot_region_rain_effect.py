@@ -9,43 +9,24 @@
 """
 import os
 import numpy as np
-import pandas as pd
-import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import matplotlib
+from common import BASE, load_merged, fit_hac, pct_ci
 
-BASE = r"C:\SH_Antigravity\bigcontest"
 OUT_FIG = os.path.join(BASE, "figures", "region_rain_effect_ci.png")
 
 # 한글 폰트 설정 (윈도우 기본 맑은 고딕)
 matplotlib.rcParams["font.family"] = "Malgun Gothic"
 matplotlib.rcParams["axes.unicode_minus"] = False
 
-m = pd.read_csv(os.path.join(BASE, "data", "processed", "merged_daily.csv"),
-                 encoding="utf-8-sig", parse_dates=["date"])
-m["rain_light"] = ((m["precip_sum"] >= 1) & (m["precip_sum"] < 30)).astype(float)
-m["rain_heavy"] = (m["precip_sum"] >= 30).astype(float)
-m["heat_day"] = m["heat_day"].astype(float)
-m["is_holiday"] = m["is_holiday"].astype(float)
+m = load_merged()
 
 results = {}
 for region, g in m.groupby("region"):
     g = g.set_index("date").sort_index()
-    y = np.log(g["s2c_amt"])
-    X = pd.get_dummies(g[["month", "weekday"]].astype(str), drop_first=True, dtype=float)
-    for c in ["is_holiday", "rain_light", "rain_heavy", "heat_day"]:
-        X[c] = g[c].astype(float)
-    X = sm.add_constant(X)
-    res = sm.OLS(y, X).fit(cov_type="HAC", cov_kwds={"maxlags": 3})
-
+    res = fit_hac(g, np.log(g["s2c_amt"]), ["is_holiday", "rain_light", "rain_heavy", "heat_day"])
     for term in ["rain_light", "rain_heavy"]:
-        coef = res.params[term]
-        se = res.bse[term]
-        # 로그 계수 -> % 효과로 변환 (하한/상한도 각각 변환)
-        pct = (np.exp(coef) - 1) * 100
-        lo = (np.exp(coef - 1.96 * se) - 1) * 100
-        hi = (np.exp(coef + 1.96 * se) - 1) * 100
-        results[(region, term)] = (pct, lo, hi, res.pvalues[term])
+        results[(region, term)] = pct_ci(res, term)
 
 # ---- 그래프 ----
 fig, ax = plt.subplots(figsize=(7, 5))

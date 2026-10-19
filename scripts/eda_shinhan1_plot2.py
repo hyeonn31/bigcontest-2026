@@ -3,11 +3,14 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 plt.rcParams['font.family'] = 'Malgun Gothic'
 plt.rcParams['axes.unicode_minus'] = False
 
-path = r"C:\Users\user\Downloads\SH\bigcontest\data\shinhan_card\신한카드_빅콘테스트2026_데이터1.txt"
+path = BASE + r"\data\shinhan_card\신한카드_빅콘테스트2026_데이터1.txt"
 df = pd.read_csv(path, sep='\t', encoding='utf-8-sig')
 
 p99 = df['TS_AT'].quantile(0.99)
@@ -28,7 +31,7 @@ axes[1].set_ylabel('빈도')
 axes[1].ticklabel_format(style='plain', axis='x')
 
 plt.tight_layout()
-out_png = r"C:\Users\user\Downloads\SH\bigcontest\figures\ts_at_zoom.png"
+out_png = BASE + r"\figures\ts_at_zoom.png"
 plt.savefig(out_png, dpi=110)
 print('p99 =', p99)
 print('saved to', out_png)

@@ -7,5 +7,5 @@
  35mm | n=12 | 동일 시도 거주자=  -5.9%(p=0.002) | 타 시도 거주자= -17.6%(p=0.000) | 차이= -11.7%p
  40mm | n=12 | 동일 시도 거주자=  -5.9%(p=0.002) | 타 시도 거주자= -17.6%(p=0.000) | 차이= -11.7%p
 
-saved: C:\SH_Antigravity\bigcontest\figures\robustness_rain_threshold.png
+saved: C:\Claude_SH\SH_Antigravity\bigcontest\figures\robustness_rain_threshold.png
 n=호우일로 분류된 날짜 수. 기준을 높일수록 n이 줄어 신뢰구간이 넓어지는 것은 자연스러운 현상.

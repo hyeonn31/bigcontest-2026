@@ -22,31 +22,18 @@ statsmodels HAC 방식으로 일관되게 검정해 왔으므로 같은 방법�
 """
 import os
 import numpy as np
-import pandas as pd
-import statsmodels.api as sm
+from common import BASE, load_merged, fit_hac
 
-BASE = r"C:\SH_Antigravity\bigcontest"
 OUT_TXT = os.path.join(BASE, "eda_output", "region_interaction_test.txt")
 
-m = pd.read_csv(os.path.join(BASE, "data", "processed", "merged_daily.csv"),
-                 encoding="utf-8-sig", parse_dates=["date"])
-m["rain_light"] = ((m["precip_sum"] >= 1) & (m["precip_sum"] < 30)).astype(float)
-m["rain_heavy"] = (m["precip_sum"] >= 30).astype(float)
-m["heat_day"] = m["heat_day"].astype(float)
-m["is_holiday"] = m["is_holiday"].astype(float)
-m = m.sort_values(["region", "date"]).reset_index(drop=True)
-
-y = np.log(m["s2c_amt"])
-
-X = pd.get_dummies(m[["month", "weekday"]].astype(str), drop_first=True, dtype=float)
-X["is_holiday"] = m["is_holiday"]
-X["region_cc"] = (m["region"] == "강원 춘천시").astype(float)  # baseline = 강남
+m = load_merged().sort_values(["region", "date"]).reset_index(drop=True)
+m["region_cc"] = (m["region"] == "강원 춘천시").astype(float)  # baseline = 강남
+terms = ["is_holiday", "region_cc"]
 for t in ["rain_light", "rain_heavy", "heat_day"]:
-    X[t] = m[t]
-    X[f"region_cc_x_{t}"] = X["region_cc"] * m[t]
-X = sm.add_constant(X)
+    m[f"region_cc_x_{t}"] = m["region_cc"] * m[t]
+    terms += [t, f"region_cc_x_{t}"]
 
-res = sm.OLS(y, X).fit(cov_type="HAC", cov_kwds={"maxlags": 3})
+res = fit_hac(m, np.log(m["s2c_amt"]), terms)
 
 out = open(OUT_TXT, "w", encoding="utf-8")
 

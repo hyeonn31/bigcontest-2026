@@ -1,7 +1,10 @@
 import pandas as pd
+import os
 
-path = r"C:\Users\user\Downloads\SH\bigcontest\data\weather\OBS_ASOS_TIM_20260918173259.csv"
-out_path = r"C:\Users\user\Downloads\SH\bigcontest\eda_output\weather_explore.txt"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+path = BASE + r"\data\weather\OBS_ASOS_TIM_20260918173259.csv"
+out_path = BASE + r"\eda_output\weather_explore.txt"
 
 df = pd.read_csv(path, encoding='utf-8-sig')
 df['일시'] = pd.to_datetime(df['일시'])

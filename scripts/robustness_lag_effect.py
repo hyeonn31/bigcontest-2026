@@ -10,22 +10,17 @@
 import os
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
+from common import BASE, load_merged, fit_hac, pct_ci
 
-BASE = r"C:\SH_Antigravity\bigcontest"
 OUT_TXT = os.path.join(BASE, "eda_output", "robustness_lag_effect.txt")
 
-m = pd.read_csv(os.path.join(BASE, "data", "processed", "merged_daily.csv"),
-                 encoding="utf-8-sig", parse_dates=["date"])
-m["is_holiday"] = m["is_holiday"].astype(float)
+m = load_merged()
 
 CUSTOMER_COLS = {"동일 시도 거주자": "s2c_local_amt", "타 시도 거주자": "s2c_visitor_amt",
                  "전체(핵심소비)": "s2c_amt"}
 REGION = "강원 춘천시"
 
 g = m[m["region"] == REGION].set_index("date").sort_index()
-g["rain_light"] = ((g["precip_sum"] >= 1) & (g["precip_sum"] < 30)).astype(float)
-g["rain_heavy"] = (g["precip_sum"] >= 30).astype(float)
 # 전일 호우 = 어제 날짜의 rain_heavy를 오늘 행으로 shift
 g["rain_heavy_lag1"] = g["rain_heavy"].shift(1)
 
@@ -48,22 +43,11 @@ p("모형: log(y) ~ 월+요일+공휴일+당일약한비+당일호우+전일호�
 
 gg = g.dropna(subset=["rain_heavy_lag1"]).copy()  # 첫날은 전일 데이터 없어서 제외
 
-X = pd.get_dummies(gg[["month", "weekday"]].astype(str), drop_first=True, dtype=float)
-X["is_holiday"] = gg["is_holiday"]
-X["rain_light"] = gg["rain_light"]
-X["rain_heavy"] = gg["rain_heavy"]
-X["rain_heavy_lag1"] = gg["rain_heavy_lag1"]
-X = sm.add_constant(X)
-
 for cust, col in CUSTOMER_COLS.items():
-    y = np.log(gg[col])
-    res = sm.OLS(y, X).fit(cov_type="HAC", cov_kwds={"maxlags": 3})
+    res = fit_hac(gg, np.log(gg[col]), ["is_holiday", "rain_light", "rain_heavy", "rain_heavy_lag1"])
     p(f"--- {cust} ---")
     for term, label in [("rain_heavy", "당일 호우"), ("rain_heavy_lag1", "전일 호우(지연효과)")]:
-        coef, se, pv = res.params[term], res.bse[term], res.pvalues[term]
-        pct = (np.exp(coef) - 1) * 100
-        lo = (np.exp(coef - 1.96 * se) - 1) * 100
-        hi = (np.exp(coef + 1.96 * se) - 1) * 100
+        pct, lo, hi, pv = pct_ci(res, term)
         p(f"  {label:16s} {pct:7.2f}%  (95% CI {lo:6.1f}%~{hi:5.1f}%, p={pv:.4f})")
     p("")
 

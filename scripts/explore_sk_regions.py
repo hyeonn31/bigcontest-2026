@@ -1,9 +1,12 @@
 import pandas as pd
+import os
 
-path = r"C:\Users\user\Downloads\SH\bigcontest\data\sk_flow_pop\flow_age_pop_202507.csv"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+path = BASE + r"\data\sk_flow_pop\flow_age_pop_202507.csv"
 df = pd.read_csv(path, sep='|', encoding='utf-8-sig')
 
-out_path = r"C:\Users\user\Downloads\SH\bigcontest\eda_output\sk_region_explore.txt"
+out_path = BASE + r"\eda_output\sk_region_explore.txt"
 with open(out_path, 'w', encoding='utf-8') as f:
     def p(*a):
         f.write(' '.join(str(x) for x in a) + '\n')
