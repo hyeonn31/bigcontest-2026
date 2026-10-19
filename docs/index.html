@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>기후위기 취약상권 분석 | 데이터 분석 포트폴리오</title>
+<meta name="description" content="카드소비·유동인구·기상 데이터로 호우가 관광의존형 상권에 미치는 영향을 회귀분석으로 검증한 개인 프로젝트 (2026 빅콘테스트) — 데이터 정제부터 강건성 검증까지 전체 분석 결과">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root {
+  --bg: #fbfaf7; --surface: #ffffff; --ink: #1d1f23; --muted: #646a73; --line: #e6e3dc;
+  --blue: #3b6fa0; --red: #d45b5b; --blue-soft: #e8eff6; --red-soft: #fbeaea; --accent-bg: #f4efe4;
+  --ok: #2f7d5b; --no: #a8552f; --code-bg: #f3f1ec; --sig-bg: #fdf6e7;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171a; --surface: #1d2024; --ink: #e9e7e2; --muted: #9aa0a8; --line: #2e3237;
+    --blue: #7ea8d1; --red: #e88b8b; --blue-soft: #1f2a35; --red-soft: #352325; --accent-bg: #23211c;
+    --ok: #6cc49b; --no: #e0976f; --code-bg: #22252a; --sig-bg: #2a261c;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15171a; --surface: #1d2024; --ink: #e9e7e2; --muted: #9aa0a8; --line: #2e3237;
+  --blue: #7ea8d1; --red: #e88b8b; --blue-soft: #1f2a35; --red-soft: #352325; --accent-bg: #23211c;
+  --ok: #6cc49b; --no: #e0976f; --code-bg: #22252a; --sig-bg: #2a261c;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 56px; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Pretendard", -apple-system, "Malgun Gothic", sans-serif;
+  font-size: 17px; line-height: 1.75; word-break: keep-all; overflow-wrap: break-word;
+}
+.wrap { max-width: 920px; margin: 0 auto; padding: 0 16px; }
+a { color: var(--blue); }
+h1, h2, h3 { line-height: 1.3; letter-spacing: -0.02em; }
+h2 { font-size: 1.6rem; margin: 0 0 8px; }
+h3 { font-size: 1.18rem; margin: 36px 0 10px; }
+section { padding: 56px 0; border-top: 1px solid var(--line); }
+.eyebrow { font-size: .8rem; font-weight: 700; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+.lead { color: var(--muted); margin: 0 0 20px; }
+p { margin: 0 0 14px; }
+small, .small { font-size: .88rem; color: var(--muted); }
+
+nav { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+nav .wrap { display: flex; gap: 16px; overflow-x: auto; padding-top: 10px; padding-bottom: 10px; scrollbar-width: none; align-items: center; }
+nav a { color: var(--muted); text-decoration: none; font-size: .88rem; white-space: nowrap; }
+nav a:hover { color: var(--ink); }
+.theme-toggle { margin-left: auto; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 2px 10px; font: inherit; font-size: .85rem; cursor: pointer; white-space: nowrap; }
+
+header { padding: 72px 0 48px; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.tag { font-size: .8rem; padding: 3px 10px; border-radius: 99px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+header h1 { font-size: clamp(1.9rem, 5vw, 2.7rem); margin: 0 0 16px; }
+header .sub { font-size: 1.1rem; color: var(--muted); margin: 0 0 32px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 16px; }
+.stat b { display: block; font-size: clamp(1.6rem, 5vw, 2.2rem); line-height: 1.1; letter-spacing: -0.03em; }
+.stat span { font-size: .85rem; color: var(--muted); line-height: 1.4; display: block; margin-top: 6px; }
+.stat.red b { color: var(--red); } .stat.blue b { color: var(--blue); }
+.headline { background: var(--accent-bg); border-radius: 14px; padding: 20px 22px; font-weight: 600; font-size: 1.05rem; }
+
+.toc { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; margin-top: 28px; columns: 2; column-gap: 32px; font-size: .95rem; }
+.toc a { display: block; text-decoration: none; color: var(--ink); padding: 3px 0; break-inside: avoid; }
+.toc a span { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 8px; }
+
+.grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+.card h4 { margin: 0 0 6px; font-size: 1rem; }
+.card p { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.6; }
+.card .big { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; display: block; line-height: 1.2; margin-bottom: 4px; }
+
+.table-scroll { overflow-x: auto; margin: 14px 0 18px; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; min-width: 560px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { color: var(--muted); font-weight: 600; font-size: .82rem; white-space: nowrap; }
+td.num, th.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.sig td { background: var(--sig-bg); }
+td.barcell { position: relative; min-width: 150px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+td.barcell .bar { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); height: 60%; border-radius: 3px; opacity: .28; max-width: calc(100% - 20px); }
+td.barcell .bar.neg { background: var(--red); } td.barcell .bar.pos { background: var(--blue); }
+td.barcell b { position: relative; font-weight: 600; }
+.barhead { min-width: 150px; }
+
+figure { margin: 22px 0; }
+figure .frame { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+figure img { display: block; width: 100%; height: auto; }
+figcaption { font-size: .88rem; color: var(--muted); margin-top: 10px; line-height: 1.6; }
+.figpair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font-size: .84rem; line-height: 1.6; margin: 14px 0 18px; }
+code { font-family: "D2Coding", Consolas, monospace; }
+p code, li code, td code { background: var(--code-bg); padding: 1px 6px; border-radius: 5px; font-size: .88em; }
+
+.note { border-left: 3px solid var(--red); background: var(--red-soft); padding: 12px 16px; border-radius: 0 10px 10px 0; font-size: .95rem; margin: 18px 0; }
+.note.blue { border-color: var(--blue); background: var(--blue-soft); }
+.note.ok { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 10%, transparent); }
+ul.tight { padding-left: 20px; margin: 8px 0 14px; } ul.tight li { margin: 4px 0; }
+
+.steps { list-style: none; padding: 0; margin: 20px 0 0; counter-reset: s; }
+.steps li { position: relative; padding: 0 0 24px 44px; counter-increment: s; }
+.steps li::before { content: counter(s); position: absolute; left: 0; top: 2px; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--bg); font-size: .85rem; font-weight: 700; display: grid; place-items: center; }
+.steps h4 { margin: 0 0 4px; font-size: 1.05rem; }
+.steps p { margin: 0 0 4px; }
+.verdict { display: inline-block; font-size: .78rem; font-weight: 700; padding: 1px 8px; border-radius: 6px; margin-right: 6px; }
+.verdict.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
+.verdict.no { color: var(--no); background: color-mix(in srgb, var(--no) 14%, transparent); }
+.verdict.mid { color: var(--muted); background: color-mix(in srgb, var(--muted) 14%, transparent); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; margin: 14px 0; }
+details summary { cursor: pointer; font-weight: 600; font-size: .95rem; }
+details[open] summary { margin-bottom: 6px; }
+.stack { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+.stack span { font-size: .85rem; padding: 4px 10px; border-radius: 8px; background: var(--blue-soft); color: var(--blue); font-weight: 600; }
+footer { padding: 40px 0 56px; color: var(--muted); font-size: .88rem; border-top: 1px solid var(--line); }
+
+@media (max-width: 680px) {
+  body { font-size: 16px; }
+  .stats, .grid2, .grid3, .figpair { grid-template-columns: 1fr; }
+  .toc { columns: 1; }
+  section { padding: 44px 0; }
+  header { padding: 48px 0 36px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="#overview">개요</a>
+    <a href="#data">데이터</a>
+    <a href="#quality">품질 점검</a>
+    <a href="#eda">EDA</a>
+    <a href="#model">모형</a>
+    <a href="#r-region">지역·고객</a>
+    <a href="#r-time">시간대</a>
+    <a href="#r-industry">업종</a>
+    <a href="#hypo">가설 검정</a>
+    <a href="#robust">강건성</a>
+    <a href="#sk">유동인구</a>
+    <a href="#conclusion">결론</a>
+    <button class="theme-toggle" id="themeBtn" type="button" aria-label="밝게/어둡게 전환">◐ 테마</button>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <div class="tags">
+      <span class="tag">개인 프로젝트</span>
+      <span class="tag">2026 빅콘테스트 · AI데이터분석</span>
+      <span class="tag">2026.09 ~ 10</span>
+      <span class="tag">Python · 계량 회귀분석</span>
+    </div>
+    <h1>비가 오면, 어떤 상권이<br>더 크게 흔들리는가</h1>
+    <p class="sub">카드소비 · 유동인구 · 기상 데이터로 본 기후위기 취약상권 분석 — 서울 강남구 vs 강원 춘천시, 2025.07.01 ~ 12.31 (184일)</p>
+
+    <div class="stats">
+      <div class="stat red"><b>−19.1%</b><span>춘천 호우일, 타 시도 방문객 소비 변화</span></div>
+      <div class="stat blue"><b>−6.4%</b><span>같은 날, 동일 시도 거주자 소비 변화</span></div>
+      <div class="stat"><b>약 3배</b><span>방문객이 더 크게 감소 (두 값 모두 p&lt;0.001)</span></div>
+    </div>
+    <div class="headline">기후위기는 상권을 균일하게 위협하지 않는다. 외지 방문객 매출 비중이 높은 관광의존형 상권은 호우 시 방문객 소비가 지역주민보다 훨씬 크게 줄어 구조적으로 취약하다.</div>
+
+    <div class="toc">
+      <a href="#overview"><span>01</span>프로젝트 개요</a>
+      <a href="#data"><span>02</span>데이터 구성과 전처리</a>
+      <a href="#quality"><span>03</span>데이터 품질 점검</a>
+      <a href="#eda"><span>04</span>탐색적 분석 (EDA)</a>
+      <a href="#first"><span>05</span>1차 검정: 순열검정</a>
+      <a href="#model"><span>06</span>본 분석 모형</a>
+      <a href="#r-region"><span>07</span>결과 ① 지역 · 고객 유형</a>
+      <a href="#r-time"><span>08</span>결과 ② 시간대별</a>
+      <a href="#r-industry"><span>09</span>결과 ③ 업종별</a>
+      <a href="#hypo"><span>10</span>가설 검정과 범위 좁히기</a>
+      <a href="#robust"><span>11</span>강건성 검증</a>
+      <a href="#sk"><span>12</span>보조 지표: SK 유동인구</a>
+      <a href="#conclusion"><span>13</span>결론 · 시사점 · 한계</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================ 01 -->
+<section id="overview">
+  <div class="wrap">
+    <div class="eyebrow">01 · Overview</div>
+    <h2>프로젝트 개요</h2>
+    <p class="lead">날씨가 소비에 영향을 준다는 건 누구나 짐작합니다. 하지만 정책이나 금융상품을 설계하려면 <b>"어떤 상권이 더 취약한가"</b>를 데이터로 구분할 수 있어야 합니다.</p>
+    <div class="grid2">
+      <div class="card"><h4>분석 질문</h4><p>호우·폭염 같은 기후 이벤트가 상권 소비를 얼마나 줄이는가? 그 충격은 지역·시간대·업종·고객 유형에 따라 어떻게 다른가?</p></div>
+      <div class="card"><h4>내 역할 (개인 프로젝트)</h4><p>데이터 정제·병합, 가설 설정과 통계 검정, 강건성 검증, 시각화, 보고서·발표자료 제작까지 전 과정 단독 수행</p></div>
+      <div class="card"><h4>분석 대상</h4><p>서울 강남구(대도시 생활·업무 상권) vs 강원 춘천시(관광 상권), 2025년 7~12월 184일</p></div>
+      <div class="card"><h4>접근 방식</h4><p>예측 모델이 아니라 <b>요인의 영향을 검증하는 통계적 추론</b>. "비가 오면 소비가 실제로 줄어드는가, 누구의 소비가 더 줄어드는가"를 묻는 문제이기 때문</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 02 -->
+<section id="data">
+  <div class="wrap">
+    <div class="eyebrow">02 · Data</div>
+    <h2>데이터 구성과 전처리</h2>
+    <p class="lead">카드는 날짜×시군구, 유동인구는 월×50m 격자, 기상은 시간×관측소 단위였습니다. 분석 단위를 <b>"하루 × 지역"</b>으로 정하고 모두 맞췄습니다.</p>
+
+    <div class="table-scroll"><table>
+      <thead><tr><th>데이터</th><th class="num">규모</th><th>원래 단위</th><th>주요 컬럼</th></tr></thead>
+      <tbody>
+        <tr><td>신한카드 소비 ①</td><td class="num">1,044,710행</td><td>일 × 지역 × 업종 × 시간대(6시간) × 성별·연령</td><td>결제금액·건수, 법인 포함</td></tr>
+        <tr><td>신한카드 소비 ②</td><td class="num">1,806,800행</td><td>일 × 지역 × 업종 × 고객 거주지(시도) × 성별·연령</td><td>결제금액·건수, 법인 제외</td></tr>
+        <tr><td>SK텔레콤 유동인구</td><td class="num">월별 3종 × 6개월</td><td>월 × 50m 격자</td><td>연령별 · 시간대별 · 요일별 인구</td></tr>
+        <tr><td>기상청 ASOS</td><td class="num">2지점 × 4,392시간</td><td>시간 × 관측소</td><td>기온, 강수량, 풍속, 습도, QC플래그</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>① SK 격자 → 지역 매핑</h3>
+    <p>SK 데이터에는 지역명이 없고 좌표만 있습니다. 격자 좌표를 정렬해 값이 크게 '점프'하는 지점을 찾았고, <code>X_COORD = 983,000</code>을 경계로 두 지역이 겹침 없이 나뉘었습니다.</p>
+    <div class="grid3">
+      <div class="card"><span class="big">15,261개</span><p>강남구 격자 (X 956,634 ~ 966,734)</p></div>
+      <div class="card"><span class="big">82,868개</span><p>춘천시 격자 (X 1,000,584 ~ 1,043,384)</p></div>
+      <div class="card"><span class="big">≈ 38 km²</span><p>강남 격자 15,261 × 0.0025 km² — 실제 면적 39.5 km²와 일치해 매핑 검증</p></div>
+    </div>
+
+    <h3>② 기상 시간자료 → 일자료</h3>
+    <p>기상청 관례상 하루는 01시~24시(다음날 00시)입니다. 그래서 관측 시각에서 1시간을 빼 날짜를 정했고, 이를 놓쳐 12/31이 빠졌던 것을 찾아 추가 수집했습니다. 일 단위로 기온(평균·최고·최저), 강수량 합계 등을 집계하고 기후 이벤트 플래그를 만들었습니다.</p>
+<pre><code>w["date"] = (w["dt"] - pd.Timedelta(hours=1)).dt.normalize()   # 00:00 관측치는 전날에 속함
+weather["heat_day"]       = weather["temp_max"]   >= 33   # 폭염
+weather["rain_day"]       = weather["precip_sum"] >= 1    # 강수일
+weather["heavy_rain_day"] = weather["precip_sum"] >= 30   # 호우</code></pre>
+    <div class="table-scroll"><table>
+      <thead><tr><th>기후 이벤트</th><th>기준</th><th class="num">강남구 일수</th><th class="num">춘천시 일수</th></tr></thead>
+      <tbody>
+        <tr><td>폭염</td><td>일 최고기온 ≥ 33℃</td><td class="num">24</td><td class="num">24</td></tr>
+        <tr><td>열대야</td><td>일 최저기온 ≥ 25℃</td><td class="num">44</td><td class="num">5</td></tr>
+        <tr><td>강수일</td><td>일 강수량 ≥ 1mm</td><td class="num">49</td><td class="num">48</td></tr>
+        <tr><td><b>호우</b></td><td>일 강수량 ≥ 30mm</td><td class="num"><b>15</b></td><td class="num"><b>18</b></td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>③ 카드 데이터 집계 · 방문객 구분</h3>
+    <p>데이터②의 고객 거주지(시도)와 가맹점 시도를 비교해 <b>동일 시도 거주자 / 타 시도 방문객</b>을 나눴습니다. 강남구의 '동일 시도'는 서울 전체(매출의 37.1%), 춘천시는 강원 전체(79.0%)라 기준이 비대칭이라는 점은 해석 시 주의했습니다.</p>
+<pre><code>core["visitor"] = core["MCT_SGG_CD"].str.split(" ").str[0] != core["CLN_SGG_CD"]
+# '서울 강남구'의 '서울'과 고객 거주 시도가 다르면 타 시도 방문객</code></pre>
+
+    <h3>④ 병합 결과</h3>
+    <p>카드(5개 집계본) + 기상 + SK 기준선 + 월·요일·공휴일 변수를 붙여 <code>merged_daily.csv</code> <b>368행(184일 × 2지역)</b>을 만들었고, 이후 모든 분석이 이 표에서 출발합니다. 공휴일(8/15, 10/3~10/9 추석 연휴, 12/25)은 검색으로 확인해 플래그로 넣었습니다.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 03 -->
+<section id="quality">
+  <div class="wrap">
+    <div class="eyebrow">03 · Data Quality</div>
+    <h2>데이터 품질 점검</h2>
+    <p class="lead">병합 후 이상해 보이는 값을 그냥 넘기지 않고 원인을 하나씩 확인했습니다. 이 중 하나(④)는 분석 결론을 바꿨습니다.</p>
+
+    <h3>① SK 12월 파일만 크기가 2배</h3>
+    <div class="table-scroll"><table>
+      <thead><tr><th>파일</th><th class="num">전체 행</th><th class="num">완전 동일한 중복 행</th></tr></thead>
+      <tbody>
+        <tr><td>flow_time_pop_202512.csv</td><td class="num">185,090</td><td class="num">92,545 (정확히 절반)</td></tr>
+        <tr><td>flow_wkdy_pop_202512.csv</td><td class="num">242,534</td><td class="num">121,267 (정확히 절반)</td></tr>
+      </tbody>
+    </table></div>
+    <p>모든 행이 값까지 똑같이 두 번 들어 있어 12월 유동인구가 2배로 부풀어 있었습니다 → <code>drop_duplicates()</code> 후 재집계.</p>
+
+    <h3>② 강수량 빈칸은 '비 없음'인가 '측정 누락'인가</h3>
+    <p>강수량 빈칸 중 1,496건은 결측 표기(QC 플래그 9)였습니다. 비가 실제로 온 시각과 날씨 조건을 비교해 간접 검증했습니다.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>구분</th><th class="num">시간 수</th><th class="num">평균 습도</th><th class="num">기온−이슬점</th><th class="num">'비 오는 조건' 비율*</th></tr></thead>
+      <tbody>
+        <tr><td>비 옴 (값 &gt; 0)</td><td class="num">827</td><td class="num">92.1%</td><td class="num">1.40℃</td><td class="num">61.2%</td></tr>
+        <tr><td>0.0 기록</td><td class="num">421</td><td class="num">83.0%</td><td class="num">3.18℃</td><td class="num">20.0%</td></tr>
+        <tr class="sig"><td><b>빈칸 + QC 9</b></td><td class="num">1,496</td><td class="num">76.7%</td><td class="num">4.47℃</td><td class="num"><b>7.8%</b></td></tr>
+        <tr><td>빈칸 (플래그 없음)</td><td class="num">6,040</td><td class="num">69.0%</td><td class="num">6.26℃</td><td class="num">7.1%</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small">* 습도 ≥ 93% 이고 기온−이슬점 &lt; 1.5℃. QC 9 빈칸은 실제 비 온 시각(61%)이 아니라 일반 빈칸(7.1%)과 비슷 → '강수 없음'으로 처리. 단 117건은 비 조건에 해당해 일부 누락 가능성은 한계로 남김.</p>
+
+    <h3>③ 신한카드 중복 · 마스킹</h3>
+    <ul class="tight">
+      <li>두 데이터 모두 키 중복·완전 중복 행 0건</li>
+      <li>결제건수 최솟값이 5, 행의 28.8%가 10건 미만 → 5건 미만 셀은 마스킹(삭제)된 것으로 판단. 10건 미만 셀이 핵심 소비 금액에서 차지하는 비중은 <b>2.76%</b>로, 전체 합계·큰 업종 결과에는 영향이 작음</li>
+      <li>데이터①(법인 제외)과 데이터②의 지역×일 합계 차이가 평균 8원 → 같은 소비를 다르게 자른 것이므로 교차검증용으로 쓰면 안 됨</li>
+    </ul>
+
+    <h3>④ 세금·미분류 결제가 금액의 절반 <span class="verdict ok">결론을 바꾼 발견</span></h3>
+    <div class="table-scroll"><table>
+      <thead><tr><th>업종 (데이터②)</th><th class="barhead">전체 금액 대비 비중</th></tr></thead>
+      <tbody>
+        <tr class="sig"><td>세금공과금</td><td class="barcell"><span class="bar neg" style="width:93.6%"></span><b>28.1%</b></td></tr>
+        <tr class="sig"><td>ZZ_나머지 (미분류)</td><td class="barcell"><span class="bar neg" style="width:71.7%"></span><b>21.5%</b></td></tr>
+        <tr><td>일반병원</td><td class="barcell"><span class="bar neg" style="width:17.6%"></span><b>5.3%</b></td></tr>
+        <tr><td>할인점/슈퍼마켓/양판점</td><td class="barcell"><span class="bar neg" style="width:14.8%"></span><b>4.4%</b></td></tr>
+        <tr><td>컴퓨터/소프트웨어</td><td class="barcell"><span class="bar neg" style="width:14.3%"></span><b>4.3%</b></td></tr>
+        <tr><td>보험</td><td class="barcell"><span class="bar neg" style="width:11.5%"></span><b>3.5%</b></td></tr>
+      </tbody>
+    </table></div>
+    <p>두 항목이 금액의 49.6%(강남구는 51.4%)였고, 소수 거액 결제가 하루 합계를 좌우했습니다. 같은 지역·월·요일 평균 대비 소비가 가장 튀었던 날들은 모두 이 두 항목 때문이었습니다.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>날짜</th><th>지역</th><th class="num">평소 대비 소비</th><th>그날 최대 업종</th><th class="num">그날 금액 중 비중</th></tr></thead>
+      <tbody>
+        <tr><td>2025-12-30</td><td>춘천시</td><td class="num">2.05배</td><td>ZZ_나머지</td><td class="num">63.5%</td></tr>
+        <tr><td>2025-12-29</td><td>강남구</td><td class="num">1.97배</td><td>세금공과금</td><td class="num">68.3%</td></tr>
+        <tr><td>2025-12-15</td><td>춘천시</td><td class="num">1.87배</td><td>ZZ_나머지</td><td class="num">70.1%</td></tr>
+        <tr><td>2025-09-30</td><td>강남구</td><td class="num">1.76배</td><td>세금공과금</td><td class="num">53.3%</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note ok">→ 상권 소비가 아닌 두 항목을 뺀 <b>'핵심 소비'</b>를 새로 정의해 이후 모든 분석의 종속변수로 사용했습니다. 이걸 빼기 전 첫 검정에서는 "기후 효과 없음(전 항목 p&gt;0.2)"이 나왔습니다.</div>
+  </div>
+</section>
+
+<!-- ============================================================ 04 -->
+<section id="eda">
+  <div class="wrap">
+    <div class="eyebrow">04 · EDA</div>
+    <h2>탐색적 분석: 결제금액은 극단적으로 치우쳐 있다</h2>
+    <p class="lead">두 카드 데이터 모두 결측치 0, 기간 184일이 정확히 일치했습니다. 문제는 분포였습니다.</p>
+    <figure>
+      <div class="frame"><img src="img/ts_at_distribution.png" alt="결제금액 분포: 원본 스케일에서는 0 근처에 몰려 있고, log10 스케일에서는 종 모양에 가까움" loading="lazy"></div>
+      <figcaption>결제금액(데이터① 행 단위) 분포. 왼쪽 원본 스케일은 소수 거액 결제 때문에 대부분이 0 근처에 붙어 보이지 않고, 오른쪽 log10 스케일에서는 종 모양에 가깝다.</figcaption>
+    </figure>
+    <figure>
+      <div class="frame"><img src="img/ts_at_zoom.png" alt="상위 1%를 제외해도 여전히 오른쪽으로 긴 꼬리" loading="lazy"></div>
+      <figcaption>상위 1%를 빼고 확대해도 오른쪽 꼬리가 길다. 법인 결제 중에는 한 셀에 최대 5,205억 원까지 튀는 값도 있었다(법인은 데이터① 일 금액의 평균 13.4%, 이상치 날엔 최대 81%).</figcaption>
+    </figure>
+    <div class="note blue">→ 이상치를 잘라내지 않고 <b>로그 변환</b>으로 다룸. 회귀의 종속변수를 log(금액)으로 두면 계수가 곧 "몇 % 변화"로 해석되는 장점도 있습니다. 법인 결제는 개인 소비 분석에서 제외했습니다.</div>
+  </div>
+</section>
+
+<!-- ============================================================ 05 -->
+<section id="first">
+  <div class="wrap">
+    <div class="eyebrow">05 · First Test</div>
+    <h2>1차 검정: 순열검정으로 신호 확인</h2>
+    <p class="lead">본격적인 모형 전에, 가정이 적은 순열검정으로 신호가 있는지 먼저 확인했습니다. 소비를 "같은 지역·월·요일 평균 대비 비율(지수)"로 바꾸고, 이벤트일과 나머지 날의 평균 차이가 날짜를 무작위로 10,000번 섞었을 때보다 극단적인지 봤습니다.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>지역</th><th>이벤트</th><th>대상</th><th class="num">일수</th><th class="barhead">평소 대비 지수 차이</th><th class="num">p (전체)</th><th class="num">p (공휴일 제외)</th></tr></thead>
+      <tbody>
+        <tr><td>춘천</td><td>호우</td><td>전체</td><td class="num">18</td><td class="barcell"><span class="bar neg" style="width:31.0%"></span><b>−6.2%p</b></td><td class="num">0.0009</td><td class="num">0.0001</td></tr>
+        <tr><td>춘천</td><td>호우</td><td>동일 시도</td><td class="num">18</td><td class="barcell"><span class="bar neg" style="width:19.0%"></span><b>−3.8%p</b></td><td class="num">0.067</td><td class="num">0.006</td></tr>
+        <tr class="sig"><td>춘천</td><td>호우</td><td>타 시도</td><td class="num">18</td><td class="barcell"><span class="bar neg" style="width:82.5%"></span><b>−16.5%p</b></td><td class="num">0.0003</td><td class="num">&lt;0.0001</td></tr>
+        <tr><td>춘천</td><td>강수일</td><td>전체</td><td class="num">48</td><td class="barcell"><span class="bar neg" style="width:25.5%"></span><b>−5.1%p</b></td><td class="num">&lt;0.0001</td><td class="num">0.0001</td></tr>
+        <tr><td>강남</td><td>호우</td><td>전체</td><td class="num">15</td><td class="barcell"><span class="bar neg" style="width:40.5%"></span><b>−8.1%p</b></td><td class="num">0.041</td><td class="num">0.19</td></tr>
+        <tr><td>강남</td><td>강수일</td><td>전체</td><td class="num">49</td><td class="barcell"><span class="bar neg" style="width:20.0%"></span><b>−4.0%p</b></td><td class="num">0.097</td><td class="num">0.15</td></tr>
+        <tr><td>춘천</td><td>폭염</td><td>전체</td><td class="num">24</td><td class="barcell"><span class="bar pos" style="width:10.5%"></span><b>+2.1%p</b></td><td class="num">0.19</td><td class="num">0.14</td></tr>
+        <tr><td>강남</td><td>폭염</td><td>전체</td><td class="num">24</td><td class="barcell"><span class="bar pos" style="width:11.5%"></span><b>+2.3%p</b></td><td class="num">0.47</td><td class="num">0.54</td></tr>
+      </tbody>
+    </table></div>
+    <p>춘천은 비가 오면 소비가 뚜렷하게 줄고 특히 타 시도 방문객이 크게 줄었습니다. 강남은 공휴일을 빼면 신호가 사라졌습니다. 폭염은 두 지역 모두 영향이 없었습니다.</p>
+    <div class="note">한계: 순열검정은 날짜를 서로 독립으로 가정하는데 비는 며칠씩 이어집니다(자기상관 → p값 과소). 공휴일 같은 다른 요인도 함께 통제하지 못하고, 검정 48개를 동시에 돌렸습니다. → 다음 단계에서 회귀 모형으로 보완</div>
+  </div>
+</section>
+
+<!-- ============================================================ 06 -->
+<section id="model">
+  <div class="wrap">
+    <div class="eyebrow">06 · Model</div>
+    <h2>본 분석 모형: 로그선형 회귀 + 보정 3종</h2>
+<pre><code>log(핵심 소비) = α + Σ 월 더미 + Σ 요일 더미 + β₁·공휴일
+                 + β₂·약한비(1~30mm) + β₃·호우(30mm↑) + β₄·폭염(33℃↑) + ε
+
+효과(%) = (exp(β) − 1) × 100    ← '비 안 온 평범한 날' 대비 소비 변화율</code></pre>
+    <div class="grid3">
+      <div class="card"><h4>HAC 표준오차</h4><p>비가 며칠씩 이어지는 자기상관이 있으면 일반 표준오차는 과소추정됨 → Newey-West(최대 3일 시차)로 보정</p></div>
+      <div class="card"><h4>FDR 보정</h4><p>업종 145개를 동시에 검정하면 우연한 유의성이 섞임 → Benjamini–Hochberg로 q &lt; 0.1인 업종만 '유의'로 봄</p></div>
+      <div class="card"><h4>상호작용항</h4><p>"두 그룹의 반응이 다른가"는 각자 유의한지가 아니라 차이 자체를 검정해야 함 → 지역 × 기후 상호작용항</p></div>
+    </div>
+    <p style="margin-top:18px">모든 검정이 같은 틀을 쓰도록 공통 함수로 만들어, 스크립트마다 넣는 변수만 바꿔 재사용했습니다.</p>
+<pre><code>def fit_hac(g, y, terms):
+    """y(이미 로그) ~ 월+요일 더미 + g[terms], HAC(3일)"""
+    X = pd.get_dummies(g[["month", "weekday"]].astype(str), drop_first=True, dtype=float)
+    for c in terms:
+        X[c] = g[c].astype(float)
+    X = sm.add_constant(X).loc[y.index]
+    return sm.OLS(y, X).fit(cov_type="HAC", cov_kwds={"maxlags": 3})
+
+def pct_ci(res, term):
+    """로그 계수 → (효과%, 95% 하한%, 상한%, p값)"""
+    coef, se = res.params[term], res.bse[term]
+    to_pct = lambda b: (np.exp(b) - 1) * 100
+    return to_pct(coef), to_pct(coef - 1.96 * se), to_pct(coef + 1.96 * se), res.pvalues[term]</code></pre>
+  </div>
+</section>
+
+<!-- ============================================================ 07 -->
+<section id="r-region">
+  <div class="wrap">
+    <div class="eyebrow">07 · Result ①</div>
+    <h2>지역 전체로는 애매하지만, 고객을 나누면 뚜렷하다</h2>
+
+    <div class="table-scroll"><table>
+      <thead><tr><th>지역</th><th>대상</th><th class="barhead">약한 비 (1~30mm)</th><th class="num">p</th><th class="barhead">호우 (30mm↑)</th><th class="num">p</th><th class="num">폭염</th></tr></thead>
+      <tbody>
+        <tr><td>춘천</td><td>전체</td><td class="barcell"><span class="bar neg" style="width:22.2%"></span><b>−5.6%</b></td><td class="num">0.003</td><td class="barcell"><span class="bar neg" style="width:34.6%"></span><b>−8.6%</b></td><td class="num">&lt;0.001</td><td class="num">+0.4% (n.s.)</td></tr>
+        <tr><td>춘천</td><td>동일 시도</td><td class="barcell"><span class="bar neg" style="width:23.6%"></span><b>−5.9%</b></td><td class="num">0.015</td><td class="barcell"><span class="bar neg" style="width:25.5%"></span><b>−6.4%</b></td><td class="num">&lt;0.001</td><td class="num">0.0% (n.s.)</td></tr>
+        <tr class="sig"><td>춘천</td><td><b>타 시도</b></td><td class="barcell"><span class="bar neg" style="width:22.6%"></span><b>−5.6%</b></td><td class="num">0.011</td><td class="barcell"><span class="bar neg" style="width:76.3%"></span><b>−19.1%</b></td><td class="num">&lt;0.001</td><td class="num">+2.2% (n.s.)</td></tr>
+        <tr><td>강남</td><td>전체</td><td class="barcell"><span class="bar neg" style="width:11.5%"></span><b>−2.9%</b></td><td class="num">0.30</td><td class="barcell"><span class="bar neg" style="width:44.2%"></span><b>−11.0%</b></td><td class="num">0.069</td><td class="num">−0.4% (n.s.)</td></tr>
+        <tr><td>강남</td><td>동일 시도</td><td class="barcell"><span class="bar neg" style="width:17.0%"></span><b>−4.2%</b></td><td class="num">0.054</td><td class="barcell"><span class="bar neg" style="width:48.0%"></span><b>−12.0%</b></td><td class="num">0.061</td><td class="num">−0.2% (n.s.)</td></tr>
+        <tr><td>강남</td><td>타 시도</td><td class="barcell"><span class="bar neg" style="width:7.0%"></span><b>−1.8%</b></td><td class="num">0.61</td><td class="barcell"><span class="bar neg" style="width:40.7%"></span><b>−10.2%</b></td><td class="num">0.091</td><td class="num">−0.5% (n.s.)</td></tr>
+      </tbody>
+    </table></div>
+
+    <figure>
+      <div class="frame"><img src="img/region_rain_effect_ci.png" alt="지역별 비 효과와 95% 신뢰구간" loading="lazy"></div>
+      <figcaption>지역 전체 비 효과와 95% 신뢰구간. 강남 호우 −11.0%는 신뢰구간(−21.6 ~ +0.9%)이 0을 포함해 불확실하고, 춘천 −8.6%(−12.0 ~ −5.1%)는 유의하다.</figcaption>
+    </figure>
+    <figure>
+      <div class="frame"><img src="img/visitor_local_rain_effect_ci.png" alt="지역 × 고객유형별 비 효과와 95% 신뢰구간" loading="lazy"></div>
+      <figcaption><b>핵심 발견</b> — 춘천 호우일: 타 시도 방문객 −19.1% (95% CI −25.0 ~ −12.7%) vs 동일 시도 거주자 −6.4% (−9.9 ~ −2.7%). 두 신뢰구간이 겹치지 않는다. 강남은 두 그룹 모두 0을 걸쳐 판단 보류.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================================================ 08 -->
+<section id="r-time">
+  <div class="wrap">
+    <div class="eyebrow">08 · Result ②</div>
+    <h2>시간대별: 비는 하루 전체를 고르게 줄인다</h2>
+    <p class="lead">데이터①의 6시간 단위 시간대로 같은 모형을 돌렸습니다(법인·세금·미분류 제외).</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>지역</th><th>시간대</th><th class="barhead">약한 비</th><th class="num">p</th><th class="barhead">호우</th><th class="num">p</th></tr></thead>
+      <tbody>
+        <tr><td>춘천</td><td>00~05시</td><td class="barcell"><span class="bar neg" style="width:10.6%"></span><b>−1.6%</b></td><td class="num">0.52</td><td class="barcell"><span class="bar neg" style="width:54.1%"></span><b>−8.1%</b></td><td class="num">0.019</td></tr>
+        <tr><td>춘천</td><td>06~11시</td><td class="barcell"><span class="bar neg" style="width:24.7%"></span><b>−3.7%</b></td><td class="num">0.13</td><td class="barcell"><span class="bar neg" style="width:82.8%"></span><b>−12.4%</b></td><td class="num">&lt;0.001</td></tr>
+        <tr><td>춘천</td><td>12~17시</td><td class="barcell"><span class="bar neg" style="width:45.1%"></span><b>−6.8%</b></td><td class="num">0.002</td><td class="barcell"><span class="bar neg" style="width:43.1%"></span><b>−6.5%</b></td><td class="num">0.002</td></tr>
+        <tr><td>춘천</td><td>18~23시</td><td class="barcell"><span class="bar neg" style="width:34.7%"></span><b>−5.2%</b></td><td class="num">0.006</td><td class="barcell"><span class="bar neg" style="width:68.7%"></span><b>−10.3%</b></td><td class="num">&lt;0.001</td></tr>
+        <tr><td>강남</td><td>00~05시</td><td class="barcell"><span class="bar neg" style="width:6.9%"></span><b>−1.0%</b></td><td class="num">0.85</td><td class="barcell"><span class="bar neg" style="width:47.0%"></span><b>−7.0%</b></td><td class="num">0.023</td></tr>
+        <tr><td>강남</td><td>06~11시</td><td class="barcell"><span class="bar neg" style="width:15.9%"></span><b>−2.4%</b></td><td class="num">0.57</td><td class="barcell"><span class="bar neg" style="width:59.3%"></span><b>−8.9%</b></td><td class="num">0.28</td></tr>
+        <tr><td>강남</td><td>12~17시</td><td class="barcell"><span class="bar neg" style="width:19.9%"></span><b>−3.0%</b></td><td class="num">0.34</td><td class="barcell"><span class="bar neg" style="width:88.5%"></span><b>−13.3%</b></td><td class="num">0.057</td></tr>
+        <tr><td>강남</td><td>18~23시</td><td class="barcell"><span class="bar neg" style="width:24.2%"></span><b>−3.6%</b></td><td class="num">0.019</td><td class="barcell"><span class="bar neg" style="width:65.5%"></span><b>−9.8%</b></td><td class="num">0.017</td></tr>
+      </tbody>
+    </table></div>
+    <p>춘천은 호우일에 모든 시간대가 줄었습니다. "특정 시간대만 유독 줄었나"를 보려고 하루 전체 중 각 시간대의 <b>비중</b>을 종속변수로 다시 검정하니, 변화는 최대 ±4%(춘천 06~11시 −4.1%, 12~17시 +2.4%)로 전체 감소(−8 ~ −11%)에 비해 작았습니다. → 시간대는 핵심 축으로 쓰지 않음.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 09 -->
+<section id="r-industry">
+  <div class="wrap">
+    <div class="eyebrow">09 · Result ③</div>
+    <h2>업종별: 145개 업종을 동시에 검정</h2>
+    <p class="lead">일별 커버리지 95% 이상 + 하루 평균 30건 이상인 업종만 포함했습니다(춘천 64개, 강남 81개). FDR 보정 후 q &lt; 0.1인 업종만 '유의'로 봤습니다.</p>
+
+    <figure>
+      <div class="frame"><img src="img/industry_rain_effects.png" alt="업종별 강수 효과 산점도 — 업종 규모가 작을수록 값이 크게 흔들리는 깔때기 모양" loading="lazy"></div>
+      <figcaption>가로축 = 업종 규모(하루 평균 결제건수, log), 세로축 = 비 효과. 빨간 점 = FDR 통과. 작은 업종일수록 값이 크게 흔들리는 '깔때기' 모양이고, 하루 1만 건 이상인 큰 업종은 거의 전부 0 아래에 모인다 → 큰 생활 업종에서도 비의 영향이 체계적으로 나타남.</figcaption>
+    </figure>
+
+    <h3>춘천 · 호우 — 64개 중 23개 통과</h3>
+    <div class="table-scroll"><table class="data"><thead><tr><th>업종</th><th>방문객 비중</th><th>하루 평균 건수</th><th class="barhead">효과</th><th>p</th><th>q (FDR)</th></tr></thead><tbody>
+<tr class="sig"><td>장례식장/묘지/장의사</td><td class="num">49%</td><td class="num">37</td><td class="barcell"><span class="bar neg" style="width:97.6%"></span><b>−68.3%</b></td><td class="num">0.015</td><td class="num">0.046</td></tr>
+<tr class="sig"><td>실내/실외골프장</td><td class="num">78%</td><td class="num">1,882</td><td class="barcell"><span class="bar neg" style="width:81.9%"></span><b>−57.3%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>종합레저타운/놀이동산</td><td class="num">80%</td><td class="num">2,007</td><td class="barcell"><span class="bar neg" style="width:65.4%"></span><b>−45.8%</b></td><td class="num">0.001</td><td class="num">0.005</td></tr>
+<tr class="sig"><td>화원</td><td class="num">34%</td><td class="num">488</td><td class="barcell"><span class="bar neg" style="width:50.9%"></span><b>−35.6%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>세탁소</td><td class="num">9%</td><td class="num">782</td><td class="barcell"><span class="bar neg" style="width:42.9%"></span><b>−30.0%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>기타유통</td><td class="num">13%</td><td class="num">850</td><td class="barcell"><span class="bar neg" style="width:39.3%"></span><b>−27.5%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>인테리어/건축자재/주방기구</td><td class="num">11%</td><td class="num">980</td><td class="barcell"><span class="bar neg" style="width:37.3%"></span><b>−26.1%</b></td><td class="num">0.005</td><td class="num">0.020</td></tr>
+<tr class="sig"><td>의복/의류</td><td class="num">10%</td><td class="num">1,209</td><td class="barcell"><span class="bar neg" style="width:32.9%"></span><b>−23.0%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>농수산물</td><td class="num">10%</td><td class="num">1,624</td><td class="barcell"><span class="bar neg" style="width:27.2%"></span><b>−19.0%</b></td><td class="num">0.005</td><td class="num">0.020</td></tr>
+<tr class="sig"><td>자동차서비스</td><td class="num">8%</td><td class="num">1,030</td><td class="barcell"><span class="bar neg" style="width:24.5%"></span><b>−17.1%</b></td><td class="num">0.009</td><td class="num">0.031</td></tr>
+<tr class="sig"><td>커피전문점</td><td class="num">20%</td><td class="num">11,487</td><td class="barcell"><span class="bar neg" style="width:23.8%"></span><b>−16.6%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>패션잡화</td><td class="num">9%</td><td class="num">585</td><td class="barcell"><span class="bar neg" style="width:20.6%"></span><b>−14.4%</b></td><td class="num">0.009</td><td class="num">0.031</td></tr>
+<tr class="sig"><td>사무기기/문구용품</td><td class="num">13%</td><td class="num">948</td><td class="barcell"><span class="bar neg" style="width:20.3%"></span><b>−14.2%</b></td><td class="num">0.004</td><td class="num">0.020</td></tr>
+<tr class="sig"><td>주유소</td><td class="num">15%</td><td class="num">13,872</td><td class="barcell"><span class="bar neg" style="width:19.5%"></span><b>−13.6%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>일식</td><td class="num">18%</td><td class="num">1,582</td><td class="barcell"><span class="bar neg" style="width:19.2%"></span><b>−13.4%</b></td><td class="num">0.000</td><td class="num">0.001</td></tr>
+<tr class="sig"><td>생활잡화/수입상품점</td><td class="num">14%</td><td class="num">2,262</td><td class="barcell"><span class="bar neg" style="width:18.5%"></span><b>−13.0%</b></td><td class="num">0.010</td><td class="num">0.031</td></tr>
+<tr class="sig"><td>스포츠/레저용품</td><td class="num">10%</td><td class="num">1,447</td><td class="barcell"><span class="bar neg" style="width:16.5%"></span><b>−11.6%</b></td><td class="num">0.026</td><td class="num">0.075</td></tr>
+<tr class="sig"><td>기타요식</td><td class="num">23%</td><td class="num">22,467</td><td class="barcell"><span class="bar neg" style="width:13.1%"></span><b>−9.2%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>편의점</td><td class="num">18%</td><td class="num">60,446</td><td class="barcell"><span class="bar neg" style="width:10.8%"></span><b>−7.6%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>양식</td><td class="num">20%</td><td class="num">1,772</td><td class="barcell"><span class="bar neg" style="width:10.0%"></span><b>−7.0%</b></td><td class="num">0.028</td><td class="num">0.079</td></tr>
+<tr class="sig"><td>한식</td><td class="num">26%</td><td class="num">30,254</td><td class="barcell"><span class="bar neg" style="width:9.8%"></span><b>−6.8%</b></td><td class="num">0.003</td><td class="num">0.013</td></tr>
+<tr class="sig"><td>LPG가스</td><td class="num">8%</td><td class="num">3,174</td><td class="barcell"><span class="bar neg" style="width:9.0%"></span><b>−6.3%</b></td><td class="num">0.000</td><td class="num">0.001</td></tr>
+<tr class="sig"><td>제과점</td><td class="num">15%</td><td class="num">5,936</td><td class="barcell"><span class="bar neg" style="width:7.8%"></span><b>−5.5%</b></td><td class="num">0.010</td><td class="num">0.031</td></tr>
+</tbody></table></div>
+    <h3>강남 · 호우 — 81개 중 8개 통과</h3>
+    <div class="table-scroll"><table class="data"><thead><tr><th>업종</th><th>방문객 비중</th><th>하루 평균 건수</th><th class="barhead">효과</th><th>p</th><th>q (FDR)</th></tr></thead><tbody>
+<tr class="sig"><td>농수산물</td><td class="num">17%</td><td class="num">4,760</td><td class="barcell"><span class="bar neg" style="width:35.6%"></span><b>−24.9%</b></td><td class="num">0.005</td><td class="num">0.062</td></tr>
+<tr class="sig"><td>세탁소</td><td class="num">14%</td><td class="num">2,134</td><td class="barcell"><span class="bar neg" style="width:35.2%"></span><b>−24.7%</b></td><td class="num">0.007</td><td class="num">0.083</td></tr>
+<tr class="sig"><td>기타식품</td><td class="num">36%</td><td class="num">20,488</td><td class="barcell"><span class="bar neg" style="width:34.8%"></span><b>−24.4%</b></td><td class="num">0.001</td><td class="num">0.013</td></tr>
+<tr class="sig"><td>기타요식</td><td class="num">36%</td><td class="num">98,990</td><td class="barcell"><span class="bar neg" style="width:21.9%"></span><b>−15.3%</b></td><td class="num">0.001</td><td class="num">0.013</td></tr>
+<tr class="sig"><td>결제대행(PG)</td><td class="num">70%</td><td class="num">2,685</td><td class="barcell"><span class="bar neg" style="width:21.1%"></span><b>−14.8%</b></td><td class="num">0.008</td><td class="num">0.083</td></tr>
+<tr class="sig"><td>제과점</td><td class="num">25%</td><td class="num">30,334</td><td class="barcell"><span class="bar neg" style="width:19.8%"></span><b>−13.9%</b></td><td class="num">0.004</td><td class="num">0.062</td></tr>
+<tr class="sig"><td>주유소</td><td class="num">21%</td><td class="num">6,433</td><td class="barcell"><span class="bar neg" style="width:19.0%"></span><b>−13.3%</b></td><td class="num">0.000</td><td class="num">0.007</td></tr>
+<tr class="sig"><td>패스트푸드</td><td class="num">32%</td><td class="num">19,235</td><td class="barcell"><span class="bar neg" style="width:9.7%"></span><b>−6.8%</b></td><td class="num">0.000</td><td class="num">0.007</td></tr>
+</tbody></table></div>
+
+    <details>
+      <summary>약한 비(1~30mm) 통과 업종 보기 — 춘천 5개, 강남 10개</summary>
+      <h3>춘천 · 약한 비</h3>
+      <div class="table-scroll"><table class="data"><thead><tr><th>업종</th><th>방문객 비중</th><th>하루 평균 건수</th><th class="barhead">효과</th><th>p</th><th>q (FDR)</th></tr></thead><tbody>
+<tr class="sig"><td>실내/실외골프장</td><td class="num">78%</td><td class="num">1,882</td><td class="barcell"><span class="bar neg" style="width:63.4%"></span><b>−25.3%</b></td><td class="num">0.008</td><td class="num">0.100</td></tr>
+<tr class="sig"><td>스포츠/레저용품</td><td class="num">10%</td><td class="num">1,447</td><td class="barcell"><span class="bar neg" style="width:28.4%"></span><b>−11.4%</b></td><td class="num">0.002</td><td class="num">0.064</td></tr>
+<tr class="sig"><td>일식</td><td class="num">18%</td><td class="num">1,582</td><td class="barcell"><span class="bar neg" style="width:22.3%"></span><b>−8.9%</b></td><td class="num">0.005</td><td class="num">0.082</td></tr>
+<tr class="sig"><td>주유소</td><td class="num">15%</td><td class="num">13,872</td><td class="barcell"><span class="bar neg" style="width:16.3%"></span><b>−6.5%</b></td><td class="num">0.001</td><td class="num">0.064</td></tr>
+<tr class="sig"><td>커피전문점</td><td class="num">20%</td><td class="num">11,487</td><td class="barcell"><span class="bar neg" style="width:13.5%"></span><b>−5.4%</b></td><td class="num">0.004</td><td class="num">0.082</td></tr>
+</tbody></table></div>
+      <h3>강남 · 약한 비</h3>
+      <div class="table-scroll"><table class="data"><thead><tr><th>업종</th><th>방문객 비중</th><th>하루 평균 건수</th><th class="barhead">효과</th><th>p</th><th>q (FDR)</th></tr></thead><tbody>
+<tr class="sig"><td>오토바이</td><td class="num">28%</td><td class="num">91</td><td class="barcell"><span class="bar neg" style="width:86.9%"></span><b>−34.8%</b></td><td class="num">0.007</td><td class="num">0.058</td></tr>
+<tr class="sig"><td>패션잡화</td><td class="num">42%</td><td class="num">2,389</td><td class="barcell"><span class="bar neg" style="width:51.9%"></span><b>−20.7%</b></td><td class="num">0.005</td><td class="num">0.052</td></tr>
+<tr class="sig"><td>주차장</td><td class="num">45%</td><td class="num">6,319</td><td class="barcell"><span class="bar neg" style="width:19.8%"></span><b>−7.9%</b></td><td class="num">0.001</td><td class="num">0.019</td></tr>
+<tr class="sig"><td>주유소</td><td class="num">21%</td><td class="num">6,433</td><td class="barcell"><span class="bar neg" style="width:18.7%"></span><b>−7.5%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>제과점</td><td class="num">25%</td><td class="num">30,334</td><td class="barcell"><span class="bar neg" style="width:13.2%"></span><b>−5.3%</b></td><td class="num">0.000</td><td class="num">0.003</td></tr>
+<tr class="sig"><td>할인점/슈퍼마켓/양판점</td><td class="num">68%</td><td class="num">535,435</td><td class="barcell"><span class="bar neg" style="width:12.7%"></span><b>−5.1%</b></td><td class="num">0.001</td><td class="num">0.015</td></tr>
+<tr class="sig"><td>일식</td><td class="num">33%</td><td class="num">15,701</td><td class="barcell"><span class="bar neg" style="width:11.2%"></span><b>−4.5%</b></td><td class="num">0.004</td><td class="num">0.048</td></tr>
+<tr class="sig"><td>패스트푸드</td><td class="num">32%</td><td class="num">19,235</td><td class="barcell"><span class="bar neg" style="width:9.5%"></span><b>−3.8%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>커피전문점</td><td class="num">63%</td><td class="num">228,937</td><td class="barcell"><span class="bar neg" style="width:9.2%"></span><b>−3.7%</b></td><td class="num">0.000</td><td class="num">0.002</td></tr>
+<tr class="sig"><td>한식</td><td class="num">33%</td><td class="num">110,580</td><td class="barcell"><span class="bar neg" style="width:6.9%"></span><b>−2.8%</b></td><td class="num">0.006</td><td class="num">0.053</td></tr>
+</tbody></table></div>
+    </details>
+    <details>
+      <summary>전체 업종 호우 효과 보기 — 춘천 64개 (노란 행 = FDR 통과)</summary>
+      <div class="table-scroll"><table class="data"><thead><tr><th>업종</th><th>방문객 비중</th><th>하루 평균 건수</th><th class="barhead">효과</th><th>p</th><th>q (FDR)</th></tr></thead><tbody>
+<tr class="sig"><td>장례식장/묘지/장의사</td><td class="num">49%</td><td class="num">37</td><td class="barcell"><span class="bar neg" style="width:97.6%"></span><b>−68.3%</b></td><td class="num">0.015</td><td class="num">0.046</td></tr>
+<tr class="sig"><td>실내/실외골프장</td><td class="num">78%</td><td class="num">1,882</td><td class="barcell"><span class="bar neg" style="width:81.9%"></span><b>−57.3%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>종합레저타운/놀이동산</td><td class="num">80%</td><td class="num">2,007</td><td class="barcell"><span class="bar neg" style="width:65.4%"></span><b>−45.8%</b></td><td class="num">0.001</td><td class="num">0.005</td></tr>
+<tr class="sig"><td>화원</td><td class="num">34%</td><td class="num">488</td><td class="barcell"><span class="bar neg" style="width:50.9%"></span><b>−35.6%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr><td>중고품판매점</td><td class="num">4%</td><td class="num">58</td><td class="barcell"><span class="bar neg" style="width:45.2%"></span><b>−31.7%</b></td><td class="num">0.042</td><td class="num">0.107</td></tr>
+<tr><td>연구/번역서비스</td><td class="num">44%</td><td class="num">133</td><td class="barcell"><span class="bar neg" style="width:44.6%"></span><b>−31.2%</b></td><td class="num">0.069</td><td class="num">0.142</td></tr>
+<tr class="sig"><td>세탁소</td><td class="num">9%</td><td class="num">782</td><td class="barcell"><span class="bar neg" style="width:42.9%"></span><b>−30.0%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr><td>기타의료</td><td class="num">18%</td><td class="num">510</td><td class="barcell"><span class="bar neg" style="width:39.4%"></span><b>−27.6%</b></td><td class="num">0.225</td><td class="num">0.344</td></tr>
+<tr class="sig"><td>기타유통</td><td class="num">13%</td><td class="num">850</td><td class="barcell"><span class="bar neg" style="width:39.3%"></span><b>−27.5%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>인테리어/건축자재/주방기구</td><td class="num">11%</td><td class="num">980</td><td class="barcell"><span class="bar neg" style="width:37.3%"></span><b>−26.1%</b></td><td class="num">0.005</td><td class="num">0.020</td></tr>
+<tr><td>가구</td><td class="num">8%</td><td class="num">85</td><td class="barcell"><span class="bar neg" style="width:34.2%"></span><b>−24.0%</b></td><td class="num">0.375</td><td class="num">0.510</td></tr>
+<tr class="sig"><td>의복/의류</td><td class="num">10%</td><td class="num">1,209</td><td class="barcell"><span class="bar neg" style="width:32.9%"></span><b>−23.0%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr><td>안마/마사지</td><td class="num">20%</td><td class="num">32</td><td class="barcell"><span class="bar neg" style="width:28.8%"></span><b>−20.2%</b></td><td class="num">0.350</td><td class="num">0.498</td></tr>
+<tr class="sig"><td>농수산물</td><td class="num">10%</td><td class="num">1,624</td><td class="barcell"><span class="bar neg" style="width:27.2%"></span><b>−19.0%</b></td><td class="num">0.005</td><td class="num">0.020</td></tr>
+<tr><td>서점</td><td class="num">12%</td><td class="num">370</td><td class="barcell"><span class="bar neg" style="width:24.5%"></span><b>−17.2%</b></td><td class="num">0.068</td><td class="num">0.142</td></tr>
+<tr class="sig"><td>자동차서비스</td><td class="num">8%</td><td class="num">1,030</td><td class="barcell"><span class="bar neg" style="width:24.5%"></span><b>−17.1%</b></td><td class="num">0.009</td><td class="num">0.031</td></tr>
+<tr class="sig"><td>커피전문점</td><td class="num">20%</td><td class="num">11,487</td><td class="barcell"><span class="bar neg" style="width:23.8%"></span><b>−16.6%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr><td>호텔/콘도</td><td class="num">86%</td><td class="num">396</td><td class="barcell"><span class="bar neg" style="width:23.2%"></span><b>−16.3%</b></td><td class="num">0.469</td><td class="num">0.566</td></tr>
+<tr><td>한의원</td><td class="num">10%</td><td class="num">821</td><td class="barcell"><span class="bar neg" style="width:21.4%"></span><b>−15.0%</b></td><td class="num">0.055</td><td class="num">0.130</td></tr>
+<tr class="sig"><td>패션잡화</td><td class="num">9%</td><td class="num">585</td><td class="barcell"><span class="bar neg" style="width:20.6%"></span><b>−14.4%</b></td><td class="num">0.009</td><td class="num">0.031</td></tr>
+<tr class="sig"><td>사무기기/문구용품</td><td class="num">13%</td><td class="num">948</td><td class="barcell"><span class="bar neg" style="width:20.3%"></span><b>−14.2%</b></td><td class="num">0.004</td><td class="num">0.020</td></tr>
+<tr class="sig"><td>주유소</td><td class="num">15%</td><td class="num">13,872</td><td class="barcell"><span class="bar neg" style="width:19.5%"></span><b>−13.6%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr class="sig"><td>일식</td><td class="num">18%</td><td class="num">1,582</td><td class="barcell"><span class="bar neg" style="width:19.2%"></span><b>−13.4%</b></td><td class="num">0.000</td><td class="num">0.001</td></tr>
+<tr class="sig"><td>생활잡화/수입상품점</td><td class="num">14%</td><td class="num">2,262</td><td class="barcell"><span class="bar neg" style="width:18.5%"></span><b>−13.0%</b></td><td class="num">0.010</td><td class="num">0.031</td></tr>
+<tr><td>애완동물</td><td class="num">9%</td><td class="num">509</td><td class="barcell"><span class="bar neg" style="width:17.5%"></span><b>−12.2%</b></td><td class="num">0.061</td><td class="num">0.140</td></tr>
+<tr><td>시계/귀금속</td><td class="num">18%</td><td class="num">317</td><td class="barcell"><span class="bar neg" style="width:17.3%"></span><b>−12.1%</b></td><td class="num">0.424</td><td class="num">0.542</td></tr>
+<tr><td>치과병원</td><td class="num">8%</td><td class="num">1,068</td><td class="barcell"><span class="bar neg" style="width:16.6%"></span><b>−11.6%</b></td><td class="num">0.165</td><td class="num">0.278</td></tr>
+<tr class="sig"><td>스포츠/레저용품</td><td class="num">10%</td><td class="num">1,447</td><td class="barcell"><span class="bar neg" style="width:16.5%"></span><b>−11.6%</b></td><td class="num">0.026</td><td class="num">0.075</td></tr>
+<tr><td>정육점</td><td class="num">11%</td><td class="num">1,510</td><td class="barcell"><span class="bar neg" style="width:16.1%"></span><b>−11.3%</b></td><td class="num">0.225</td><td class="num">0.344</td></tr>
+<tr><td>완구/아동용자전거</td><td class="num">18%</td><td class="num">2,216</td><td class="barcell"><span class="bar neg" style="width:15.3%"></span><b>−10.7%</b></td><td class="num">0.195</td><td class="num">0.321</td></tr>
+<tr><td>모텔,여관,기타숙박</td><td class="num">70%</td><td class="num">461</td><td class="barcell"><span class="bar neg" style="width:15.1%"></span><b>−10.5%</b></td><td class="num">0.088</td><td class="num">0.170</td></tr>
+<tr class="sig"><td>기타요식</td><td class="num">23%</td><td class="num">22,467</td><td class="barcell"><span class="bar neg" style="width:13.1%"></span><b>−9.2%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr><td>일반병원</td><td class="num">10%</td><td class="num">7,750</td><td class="barcell"><span class="bar neg" style="width:12.9%"></span><b>−9.0%</b></td><td class="num">0.162</td><td class="num">0.278</td></tr>
+<tr><td>기타식품</td><td class="num">22%</td><td class="num">11,967</td><td class="barcell"><span class="bar neg" style="width:11.9%"></span><b>−8.3%</b></td><td class="num">0.052</td><td class="num">0.129</td></tr>
+<tr class="sig"><td>편의점</td><td class="num">18%</td><td class="num">60,446</td><td class="barcell"><span class="bar neg" style="width:10.8%"></span><b>−7.6%</b></td><td class="num">0.000</td><td class="num">0.000</td></tr>
+<tr><td>미용실</td><td class="num">8%</td><td class="num">2,544</td><td class="barcell"><span class="bar neg" style="width:10.4%"></span><b>−7.3%</b></td><td class="num">0.124</td><td class="num">0.224</td></tr>
+<tr><td>미용서비스</td><td class="num">7%</td><td class="num">46</td><td class="barcell"><span class="bar neg" style="width:10.1%"></span><b>−7.1%</b></td><td class="num">0.718</td><td class="num">0.781</td></tr>
+<tr class="sig"><td>양식</td><td class="num">20%</td><td class="num">1,772</td><td class="barcell"><span class="bar neg" style="width:10.0%"></span><b>−7.0%</b></td><td class="num">0.028</td><td class="num">0.079</td></tr>
+<tr class="sig"><td>한식</td><td class="num">26%</td><td class="num">30,254</td><td class="barcell"><span class="bar neg" style="width:9.8%"></span><b>−6.8%</b></td><td class="num">0.003</td><td class="num">0.013</td></tr>
+<tr><td>동물병원</td><td class="num">9%</td><td class="num">316</td><td class="barcell"><span class="bar neg" style="width:9.6%"></span><b>−6.7%</b></td><td class="num">0.453</td><td class="num">0.558</td></tr>
+<tr><td>할인점/슈퍼마켓/양판점</td><td class="num">10%</td><td class="num">37,806</td><td class="barcell"><span class="bar neg" style="width:9.6%"></span><b>−6.7%</b></td><td class="num">0.066</td><td class="num">0.142</td></tr>
+<tr class="sig"><td>LPG가스</td><td class="num">8%</td><td class="num">3,174</td><td class="barcell"><span class="bar neg" style="width:9.0%"></span><b>−6.3%</b></td><td class="num">0.000</td><td class="num">0.001</td></tr>
+<tr class="sig"><td>제과점</td><td class="num">15%</td><td class="num">5,936</td><td class="barcell"><span class="bar neg" style="width:7.8%"></span><b>−5.5%</b></td><td class="num">0.010</td><td class="num">0.031</td></tr>
+<tr><td>약국</td><td class="num">9%</td><td class="num">10,774</td><td class="barcell"><span class="bar neg" style="width:6.8%"></span><b>−4.8%</b></td><td class="num">0.082</td><td class="num">0.164</td></tr>
+<tr><td>유흥업소</td><td class="num">14%</td><td class="num">299</td><td class="barcell"><span class="bar neg" style="width:6.5%"></span><b>−4.6%</b></td><td class="num">0.575</td><td class="num">0.657</td></tr>
+<tr><td>화장품</td><td class="num">14%</td><td class="num">166</td><td class="barcell"><span class="bar neg" style="width:6.3%"></span><b>−4.4%</b></td><td class="num">0.720</td><td class="num">0.781</td></tr>
+<tr><td>자동차용품</td><td class="num">7%</td><td class="num">462</td><td class="barcell"><span class="bar neg" style="width:4.6%"></span><b>−3.2%</b></td><td class="num">0.785</td><td class="num">0.820</td></tr>
+<tr><td>패스트푸드</td><td class="num">14%</td><td class="num">4,584</td><td class="barcell"><span class="bar neg" style="width:3.6%"></span><b>−2.5%</b></td><td class="num">0.126</td><td class="num">0.224</td></tr>
+<tr><td>중식</td><td class="num">16%</td><td class="num">3,284</td><td class="barcell"><span class="bar neg" style="width:3.2%"></span><b>−2.3%</b></td><td class="num">0.311</td><td class="num">0.453</td></tr>
+<tr><td>종합병원</td><td class="num">13%</td><td class="num">2,356</td><td class="barcell"><span class="bar neg" style="width:2.7%"></span><b>−1.9%</b></td><td class="num">0.792</td><td class="num">0.820</td></tr>
+<tr><td>가전</td><td class="num">10%</td><td class="num">242</td><td class="barcell"><span class="bar neg" style="width:0.0%"></span><b>−0.0%</b></td><td class="num">0.999</td><td class="num">0.999</td></tr>
+<tr><td>스포츠시설</td><td class="num">32%</td><td class="num">1,403</td><td class="barcell"><span class="bar pos" style="width:1.2%"></span><b>+0.9%</b></td><td class="num">0.921</td><td class="num">0.936</td></tr>
+<tr><td>헬스장</td><td class="num">10%</td><td class="num">447</td><td class="barcell"><span class="bar pos" style="width:5.2%"></span><b>+3.7%</b></td><td class="num">0.670</td><td class="num">0.752</td></tr>
+<tr><td>노래방</td><td class="num">13%</td><td class="num">1,374</td><td class="barcell"><span class="bar pos" style="width:8.7%"></span><b>+6.1%</b></td><td class="num">0.387</td><td class="num">0.516</td></tr>
+<tr><td>게임방/오락실</td><td class="num">21%</td><td class="num">2,970</td><td class="barcell"><span class="bar pos" style="width:8.7%"></span><b>+6.1%</b></td><td class="num">0.040</td><td class="num">0.106</td></tr>
+<tr><td>학원/학습지</td><td class="num">4%</td><td class="num">555</td><td class="barcell"><span class="bar pos" style="width:9.0%"></span><b>+6.3%</b></td><td class="num">0.573</td><td class="num">0.657</td></tr>
+<tr><td>싸우나/목욕탕</td><td class="num">22%</td><td class="num">880</td><td class="barcell"><span class="bar pos" style="width:12.8%"></span><b>+8.9%</b></td><td class="num">0.105</td><td class="num">0.199</td></tr>
+<tr><td>컴퓨터/소프트웨어</td><td class="num">8%</td><td class="num">47</td><td class="barcell"><span class="bar pos" style="width:12.8%"></span><b>+9.0%</b></td><td class="num">0.794</td><td class="num">0.820</td></tr>
+<tr><td>영화/공연</td><td class="num">14%</td><td class="num">469</td><td class="barcell"><span class="bar pos" style="width:14.1%"></span><b>+9.9%</b></td><td class="num">0.203</td><td class="num">0.326</td></tr>
+<tr><td>주차장</td><td class="num">22%</td><td class="num">442</td><td class="barcell"><span class="bar pos" style="width:23.7%"></span><b>+16.6%</b></td><td class="num">0.266</td><td class="num">0.396</td></tr>
+<tr><td>독서실</td><td class="num">4%</td><td class="num">36</td><td class="barcell"><span class="bar pos" style="width:26.4%"></span><b>+18.5%</b></td><td class="num">0.570</td><td class="num">0.657</td></tr>
+<tr><td>예식장/결혼서비스</td><td class="num">9%</td><td class="num">60</td><td class="barcell"><span class="bar pos" style="width:27.3%"></span><b>+19.1%</b></td><td class="num">0.414</td><td class="num">0.541</td></tr>
+<tr><td>수제용품점</td><td class="num">37%</td><td class="num">138</td><td class="barcell"><span class="bar pos" style="width:30.8%"></span><b>+21.5%</b></td><td class="num">0.435</td><td class="num">0.546</td></tr>
+<tr><td>문화용품</td><td class="num">37%</td><td class="num">272</td><td class="barcell"><span class="bar pos" style="width:37.5%"></span><b>+26.2%</b></td><td class="num">0.362</td><td class="num">0.504</td></tr>
+</tbody></table></div>
+    </details>
+    <details>
+      <summary>전체 업종 호우 효과 보기 — 강남 81개 (노란 행 = FDR 통과)</summary>
+      <div class="table-scroll"><table class="data"><thead><tr><th>업종</th><th>방문객 비중</th><th>하루 평균 건수</th><th class="barhead">효과</th><th>p</th><th>q (FDR)</th></tr></thead><tbody>
+<tr><td>백화점</td><td class="num">29%</td><td class="num">25,171</td><td class="barcell"><span class="bar neg" style="width:56.0%"></span><b>−39.2%</b></td><td class="num">0.178</td><td class="num">0.336</td></tr>
+<tr><td>예식장/결혼서비스</td><td class="num">47%</td><td class="num">931</td><td class="barcell"><span class="bar neg" style="width:54.8%"></span><b>−38.3%</b></td><td class="num">0.150</td><td class="num">0.329</td></tr>
+<tr><td>중고품판매점</td><td class="num">22%</td><td class="num">158</td><td class="barcell"><span class="bar neg" style="width:54.5%"></span><b>−38.2%</b></td><td class="num">0.032</td><td class="num">0.170</td></tr>
+<tr><td>문화용품</td><td class="num">42%</td><td class="num">597</td><td class="barcell"><span class="bar neg" style="width:52.1%"></span><b>−36.5%</b></td><td class="num">0.045</td><td class="num">0.204</td></tr>
+<tr><td>기타의료</td><td class="num">58%</td><td class="num">1,100</td><td class="barcell"><span class="bar neg" style="width:49.7%"></span><b>−34.8%</b></td><td class="num">0.053</td><td class="num">0.204</td></tr>
+<tr><td>치과병원</td><td class="num">42%</td><td class="num">4,634</td><td class="barcell"><span class="bar neg" style="width:42.0%"></span><b>−29.4%</b></td><td class="num">0.340</td><td class="num">0.501</td></tr>
+<tr><td>장례식장/묘지/장의사</td><td class="num">75%</td><td class="num">58</td><td class="barcell"><span class="bar neg" style="width:37.7%"></span><b>−26.4%</b></td><td class="num">0.324</td><td class="num">0.486</td></tr>
+<tr><td>인테리어/건축자재/주방기구</td><td class="num">50%</td><td class="num">2,160</td><td class="barcell"><span class="bar neg" style="width:36.6%"></span><b>−25.7%</b></td><td class="num">0.161</td><td class="num">0.329</td></tr>
+<tr><td>오토바이</td><td class="num">28%</td><td class="num">91</td><td class="barcell"><span class="bar neg" style="width:36.4%"></span><b>−25.4%</b></td><td class="num">0.083</td><td class="num">0.232</td></tr>
+<tr><td>패션잡화</td><td class="num">42%</td><td class="num">2,389</td><td class="barcell"><span class="bar neg" style="width:36.2%"></span><b>−25.3%</b></td><td class="num">0.161</td><td class="num">0.329</td></tr>
+<tr class="sig"><td>농수산물</td><td class="num">17%</td><td class="num">4,760</td><td class="barcell"><span class="bar neg" style="width:35.6%"></span><b>−24.9%</b></td><td class="num">0.005</td><td class="num">0.062</td></tr>
+<tr class="sig"><td>세탁소</td><td class="num">14%</td><td class="num">2,134</td><td class="barcell"><span class="bar neg" style="width:35.2%"></span><b>−24.7%</b></td><td class="num">0.007</td><td class="num">0.083</td></tr>
+<tr class="sig"><td>기타식품</td><td class="num">36%</td><td class="num">20,488</td><td class="barcell"><span class="bar neg" style="width:34.8%"></span><b>−24.4%</b></td><td class="num">0.001</td><td class="num">0.013</td></tr>
+<tr><td>가전</td><td class="num">35%</td><td class="num">757</td><td class="barcell"><span class="bar neg" style="width:34.5%"></span><b>−24.1%</b></td><td class="num">0.209</td><td class="num">0.361</td></tr>
+<tr><td>미용실</td><td class="num">28%</td><td class="num">7,524</td><td class="barcell"><span class="bar neg" style="width:32.2%"></span><b>−22.5%</b></td><td class="num">0.102</td><td class="num">0.275</td></tr>
+<tr><td>할인점/슈퍼마켓/양판점</td><td class="num">68%</td><td class="num">535,435</td><td class="barcell"><span class="bar neg" style="width:30.5%"></span><b>−21.3%</b></td><td class="num">0.064</td><td class="num">0.218</td></tr>
+<tr><td>연구/번역서비스</td><td class="num">48%</td><td class="num">1,966</td><td class="barcell"><span class="bar neg" style="width:30.1%"></span><b>−21.1%</b></td><td class="num">0.070</td><td class="num">0.218</td></tr>
+<tr><td>주류판매</td><td class="num">22%</td><td class="num">514</td><td class="barcell"><span class="bar neg" style="width:28.7%"></span><b>−20.1%</b></td><td class="num">0.170</td><td class="num">0.329</td></tr>
+<tr><td>학원/학습지</td><td class="num">27%</td><td class="num">15,673</td><td class="barcell"><span class="bar neg" style="width:28.6%"></span><b>−20.0%</b></td><td class="num">0.031</td><td class="num">0.170</td></tr>
+<tr><td>기타유통</td><td class="num">42%</td><td class="num">2,160</td><td class="barcell"><span class="bar neg" style="width:28.2%"></span><b>−19.8%</b></td><td class="num">0.150</td><td class="num">0.329</td></tr>
+<tr><td>자동차서비스</td><td class="num">41%</td><td class="num">1,124</td><td class="barcell"><span class="bar neg" style="width:28.1%"></span><b>−19.7%</b></td><td class="num">0.116</td><td class="num">0.285</td></tr>
+<tr><td>가구</td><td class="num">40%</td><td class="num">168</td><td class="barcell"><span class="bar neg" style="width:27.4%"></span><b>−19.2%</b></td><td class="num">0.617</td><td class="num">0.701</td></tr>
+<tr><td>헬스장</td><td class="num">18%</td><td class="num">2,556</td><td class="barcell"><span class="bar neg" style="width:27.4%"></span><b>−19.2%</b></td><td class="num">0.158</td><td class="num">0.329</td></tr>
+<tr><td>사무기기/문구용품</td><td class="num">34%</td><td class="num">5,717</td><td class="barcell"><span class="bar neg" style="width:25.9%"></span><b>−18.1%</b></td><td class="num">0.028</td><td class="num">0.170</td></tr>
+<tr><td>한의원</td><td class="num">42%</td><td class="num">3,809</td><td class="barcell"><span class="bar neg" style="width:25.5%"></span><b>−17.9%</b></td><td class="num">0.385</td><td class="num">0.529</td></tr>
+<tr><td>미용서비스</td><td class="num">28%</td><td class="num">392</td><td class="barcell"><span class="bar neg" style="width:24.2%"></span><b>−16.9%</b></td><td class="num">0.106</td><td class="num">0.277</td></tr>
+<tr><td>서점</td><td class="num">52%</td><td class="num">13,459</td><td class="barcell"><span class="bar neg" style="width:24.1%"></span><b>−16.9%</b></td><td class="num">0.025</td><td class="num">0.170</td></tr>
+<tr><td>화원</td><td class="num">37%</td><td class="num">925</td><td class="barcell"><span class="bar neg" style="width:24.0%"></span><b>−16.8%</b></td><td class="num">0.068</td><td class="num">0.218</td></tr>
+<tr><td>정육점</td><td class="num">14%</td><td class="num">2,635</td><td class="barcell"><span class="bar neg" style="width:22.0%"></span><b>−15.4%</b></td><td class="num">0.075</td><td class="num">0.218</td></tr>
+<tr class="sig"><td>기타요식</td><td class="num">36%</td><td class="num">98,990</td><td class="barcell"><span class="bar neg" style="width:21.9%"></span><b>−15.3%</b></td><td class="num">0.001</td><td class="num">0.013</td></tr>
+<tr class="sig"><td>결제대행(PG)</td><td class="num">70%</td><td class="num">2,685</td><td class="barcell"><span class="bar neg" style="width:21.1%"></span><b>−14.8%</b></td><td class="num">0.008</td><td class="num">0.083</td></tr>
+<tr><td>보험</td><td class="num">87%</td><td class="num">67,540</td><td class="barcell"><span class="bar neg" style="width:20.9%"></span><b>−14.6%</b></td><td class="num">0.513</td><td class="num">0.608</td></tr>
+<tr><td>악기/음반</td><td class="num">50%</td><td class="num">426</td><td class="barcell"><span class="bar neg" style="width:20.6%"></span><b>−14.4%</b></td><td class="num">0.425</td><td class="num">0.564</td></tr>
+<tr><td>동물병원</td><td class="num">25%</td><td class="num">953</td><td class="barcell"><span class="bar neg" style="width:20.2%"></span><b>−14.1%</b></td><td class="num">0.050</td><td class="num">0.204</td></tr>
+<tr class="sig"><td>제과점</td><td class="num">25%</td><td class="num">30,334</td><td class="barcell"><span class="bar neg" style="width:19.8%"></span><b>−13.9%</b></td><td class="num">0.004</td><td class="num">0.062</td></tr>
+<tr><td>일식</td><td class="num">33%</td><td class="num">15,701</td><td class="barcell"><span class="bar neg" style="width:19.1%"></span><b>−13.4%</b></td><td class="num">0.014</td><td class="num">0.126</td></tr>
+<tr><td>주차장</td><td class="num">45%</td><td class="num">6,319</td><td class="barcell"><span class="bar neg" style="width:19.1%"></span><b>−13.4%</b></td><td class="num">0.074</td><td class="num">0.218</td></tr>
+<tr class="sig"><td>주유소</td><td class="num">21%</td><td class="num">6,433</td><td class="barcell"><span class="bar neg" style="width:19.0%"></span><b>−13.3%</b></td><td class="num">0.000</td><td class="num">0.007</td></tr>
+<tr><td>스포츠/레저용품</td><td class="num">53%</td><td class="num">3,633</td><td class="barcell"><span class="bar neg" style="width:18.6%"></span><b>−13.0%</b></td><td class="num">0.111</td><td class="num">0.281</td></tr>
+<tr><td>일반병원</td><td class="num">46%</td><td class="num">35,308</td><td class="barcell"><span class="bar neg" style="width:16.9%"></span><b>−11.8%</b></td><td class="num">0.324</td><td class="num">0.486</td></tr>
+<tr><td>상품권/복권</td><td class="num">69%</td><td class="num">19,335</td><td class="barcell"><span class="bar neg" style="width:16.6%"></span><b>−11.6%</b></td><td class="num">0.301</td><td class="num">0.486</td></tr>
+<tr><td>시계/귀금속</td><td class="num">50%</td><td class="num">4,160</td><td class="barcell"><span class="bar neg" style="width:15.2%"></span><b>−10.7%</b></td><td class="num">0.323</td><td class="num">0.486</td></tr>
+<tr><td>약국</td><td class="num">38%</td><td class="num">36,390</td><td class="barcell"><span class="bar neg" style="width:15.1%"></span><b>−10.5%</b></td><td class="num">0.412</td><td class="num">0.556</td></tr>
+<tr><td>스포츠시설</td><td class="num">26%</td><td class="num">2,777</td><td class="barcell"><span class="bar neg" style="width:14.9%"></span><b>−10.5%</b></td><td class="num">0.196</td><td class="num">0.348</td></tr>
+<tr><td>방문판매/다단계판매</td><td class="num">82%</td><td class="num">1,961</td><td class="barcell"><span class="bar neg" style="width:14.8%"></span><b>−10.4%</b></td><td class="num">0.219</td><td class="num">0.369</td></tr>
+<tr><td>실내/실외골프장</td><td class="num">36%</td><td class="num">600</td><td class="barcell"><span class="bar neg" style="width:13.4%"></span><b>−9.4%</b></td><td class="num">0.197</td><td class="num">0.348</td></tr>
+<tr><td>화장품</td><td class="num">38%</td><td class="num">6,697</td><td class="barcell"><span class="bar neg" style="width:12.7%"></span><b>−8.9%</b></td><td class="num">0.461</td><td class="num">0.601</td></tr>
+<tr><td>자동차용품</td><td class="num">41%</td><td class="num">205</td><td class="barcell"><span class="bar neg" style="width:12.6%"></span><b>−8.8%</b></td><td class="num">0.496</td><td class="num">0.608</td></tr>
+<tr><td>생활잡화/수입상품점</td><td class="num">41%</td><td class="num">19,008</td><td class="barcell"><span class="bar neg" style="width:11.3%"></span><b>−7.9%</b></td><td class="num">0.382</td><td class="num">0.529</td></tr>
+<tr><td>LPG가스</td><td class="num">28%</td><td class="num">3,339</td><td class="barcell"><span class="bar neg" style="width:11.1%"></span><b>−7.7%</b></td><td class="num">0.021</td><td class="num">0.169</td></tr>
+<tr><td>한식</td><td class="num">33%</td><td class="num">110,580</td><td class="barcell"><span class="bar neg" style="width:10.9%"></span><b>−7.6%</b></td><td class="num">0.047</td><td class="num">0.204</td></tr>
+<tr><td>전용매장</td><td class="num">6%</td><td class="num">1,731</td><td class="barcell"><span class="bar neg" style="width:10.2%"></span><b>−7.1%</b></td><td class="num">0.148</td><td class="num">0.329</td></tr>
+<tr><td>유흥업소</td><td class="num">32%</td><td class="num">558</td><td class="barcell"><span class="bar neg" style="width:9.9%"></span><b>−7.0%</b></td><td class="num">0.467</td><td class="num">0.601</td></tr>
+<tr class="sig"><td>패스트푸드</td><td class="num">32%</td><td class="num">19,235</td><td class="barcell"><span class="bar neg" style="width:9.7%"></span><b>−6.8%</b></td><td class="num">0.000</td><td class="num">0.007</td></tr>
+<tr><td>독서실</td><td class="num">25%</td><td class="num">464</td><td class="barcell"><span class="bar neg" style="width:8.9%"></span><b>−6.2%</b></td><td class="num">0.514</td><td class="num">0.608</td></tr>
+<tr><td>편의점</td><td class="num">30%</td><td class="num">204,951</td><td class="barcell"><span class="bar neg" style="width:8.9%"></span><b>−6.2%</b></td><td class="num">0.039</td><td class="num">0.197</td></tr>
+<tr><td>영화/공연</td><td class="num">29%</td><td class="num">2,749</td><td class="barcell"><span class="bar neg" style="width:8.0%"></span><b>−5.6%</b></td><td class="num">0.484</td><td class="num">0.608</td></tr>
+<tr><td>쇼핑몰</td><td class="num">73%</td><td class="num">140,938</td><td class="barcell"><span class="bar neg" style="width:7.9%"></span><b>−5.5%</b></td><td class="num">0.169</td><td class="num">0.329</td></tr>
+<tr><td>완구/아동용자전거</td><td class="num">61%</td><td class="num">1,556</td><td class="barcell"><span class="bar neg" style="width:7.9%"></span><b>−5.5%</b></td><td class="num">0.591</td><td class="num">0.684</td></tr>
+<tr><td>통신요금(이동,시내전화)</td><td class="num">84%</td><td class="num">27,591</td><td class="barcell"><span class="bar neg" style="width:7.7%"></span><b>−5.4%</b></td><td class="num">0.668</td><td class="num">0.741</td></tr>
+<tr><td>싸우나/목욕탕</td><td class="num">28%</td><td class="num">1,373</td><td class="barcell"><span class="bar neg" style="width:7.6%"></span><b>−5.3%</b></td><td class="num">0.351</td><td class="num">0.508</td></tr>
+<tr><td>중식</td><td class="num">32%</td><td class="num">13,181</td><td class="barcell"><span class="bar neg" style="width:7.3%"></span><b>−5.1%</b></td><td class="num">0.192</td><td class="num">0.348</td></tr>
+<tr><td>커피전문점</td><td class="num">63%</td><td class="num">228,937</td><td class="barcell"><span class="bar neg" style="width:6.2%"></span><b>−4.4%</b></td><td class="num">0.069</td><td class="num">0.218</td></tr>
+<tr><td>여행사/항공사</td><td class="num">63%</td><td class="num">1,962</td><td class="barcell"><span class="bar neg" style="width:5.7%"></span><b>−4.0%</b></td><td class="num">0.855</td><td class="num">0.876</td></tr>
+<tr><td>게임방/오락실</td><td class="num">34%</td><td class="num">21,958</td><td class="barcell"><span class="bar neg" style="width:5.6%"></span><b>−3.9%</b></td><td class="num">0.244</td><td class="num">0.404</td></tr>
+<tr><td>종합병원</td><td class="num">56%</td><td class="num">13,693</td><td class="barcell"><span class="bar neg" style="width:5.1%"></span><b>−3.6%</b></td><td class="num">0.623</td><td class="num">0.701</td></tr>
+<tr><td>의복/의류</td><td class="num">43%</td><td class="num">14,046</td><td class="barcell"><span class="bar neg" style="width:4.9%"></span><b>−3.4%</b></td><td class="num">0.701</td><td class="num">0.767</td></tr>
+<tr><td>수제용품점</td><td class="num">40%</td><td class="num">34</td><td class="barcell"><span class="bar neg" style="width:4.2%"></span><b>−2.9%</b></td><td class="num">0.927</td><td class="num">0.939</td></tr>
+<tr><td>노래방</td><td class="num">33%</td><td class="num">5,001</td><td class="barcell"><span class="bar neg" style="width:2.7%"></span><b>−1.9%</b></td><td class="num">0.718</td><td class="num">0.775</td></tr>
+<tr><td>체인점</td><td class="num">15%</td><td class="num">226</td><td class="barcell"><span class="bar neg" style="width:2.3%"></span><b>−1.6%</b></td><td class="num">0.810</td><td class="num">0.860</td></tr>
+<tr><td>양식</td><td class="num">36%</td><td class="num">11,760</td><td class="barcell"><span class="bar neg" style="width:1.8%"></span><b>−1.3%</b></td><td class="num">0.848</td><td class="num">0.876</td></tr>
+<tr><td>고속버스/철도/여객선</td><td class="num">76%</td><td class="num">10,895</td><td class="barcell"><span class="bar neg" style="width:1.0%"></span><b>−0.7%</b></td><td class="num">0.818</td><td class="num">0.860</td></tr>
+<tr><td>회계/변리서비스</td><td class="num">37%</td><td class="num">1,575</td><td class="barcell"><span class="bar neg" style="width:0.9%"></span><b>−0.6%</b></td><td class="num">0.966</td><td class="num">0.966</td></tr>
+<tr><td>컴퓨터/소프트웨어</td><td class="num">78%</td><td class="num">367,012</td><td class="barcell"><span class="bar pos" style="width:2.2%"></span><b>+1.5%</b></td><td class="num">0.518</td><td class="num">0.608</td></tr>
+<tr><td>애완동물</td><td class="num">29%</td><td class="num">719</td><td class="barcell"><span class="bar pos" style="width:11.0%"></span><b>+7.7%</b></td><td class="num">0.494</td><td class="num">0.608</td></tr>
+<tr><td>모텔,여관,기타숙박</td><td class="num">46%</td><td class="num">1,668</td><td class="barcell"><span class="bar pos" style="width:23.2%"></span><b>+16.3%</b></td><td class="num">0.030</td><td class="num">0.170</td></tr>
+<tr><td>호텔/콘도</td><td class="num">34%</td><td class="num">1,885</td><td class="barcell"><span class="bar pos" style="width:25.4%"></span><b>+17.8%</b></td><td class="num">0.053</td><td class="num">0.204</td></tr>
+<tr><td>안마/마사지</td><td class="num">28%</td><td class="num">170</td><td class="barcell"><span class="bar pos" style="width:26.4%"></span><b>+18.5%</b></td><td class="num">0.062</td><td class="num">0.218</td></tr>
+<tr><td>수입자동차</td><td class="num">58%</td><td class="num">104</td><td class="barcell"><span class="bar pos" style="width:32.4%"></span><b>+22.7%</b></td><td class="num">0.369</td><td class="num">0.524</td></tr>
+<tr><td>부동산중개</td><td class="num">44%</td><td class="num">51</td><td class="barcell"><span class="bar pos" style="width:40.5%"></span><b>+28.3%</b></td><td class="num">0.171</td><td class="num">0.329</td></tr>
+<tr><td>면세점</td><td class="num">40%</td><td class="num">69</td><td class="barcell"><span class="bar pos" style="width:44.8%"></span><b>+31.3%</b></td><td class="num">0.310</td><td class="num">0.486</td></tr>
+</tbody></table></div>
+    </details>
+
+    <p>폭염은 대부분 영향이 없었습니다. 통과한 업종은 춘천 골프장 −23.6%, 강남 양식 −15.7%·제과점 −5.4%, 그리고 <b>쇼핑몰 +15.6%·커피전문점 +4.0%</b>(실내로 옮겨가는 대체 소비 가능성, 단 q=0.089로 잠정적이라 결론에서는 제외)입니다.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 10 -->
+<section id="hypo">
+  <div class="wrap">
+    <div class="eyebrow">10 · Hypotheses</div>
+    <h2>가설 검정과 범위 좁히기</h2>
+    <p class="lead">"왜 춘천 방문객이 더 줄어드는가"를 설명하는 가설들을 차례로 검정했고, 근거가 없는 주장은 버렸습니다.</p>
+
+    <ol class="steps">
+      <li>
+        <h4>가설 A: "방문객 비중이 높은 업종일수록 비에 약하다"</h4>
+        <p>업종별 타 시도 방문객 비중과 비 효과 크기의 스피어만 상관:</p>
+        <div class="table-scroll"><table>
+          <thead><tr><th>지역</th><th class="num">업종 수</th><th class="num">약한 비 ρ (p)</th><th class="num">호우 ρ (p)</th></tr></thead>
+          <tbody>
+            <tr><td>춘천</td><td class="num">64</td><td class="num">−0.043 (0.74)</td><td class="num">−0.124 (0.33)</td></tr>
+            <tr><td>강남</td><td class="num">81</td><td class="num">0.159 (0.16)</td><td class="num">0.097 (0.39)</td></tr>
+          </tbody>
+        </table></div>
+        <p><span class="verdict no">기각</span>업종 단위로는 관계 없음 → 업종이 아니라 <b>고객 구성(지역 단위)</b>으로 시각을 바꿈</p>
+      </li>
+      <li>
+        <h4>최종 질문 후보 3개를 같은 잣대로 비교</h4>
+        <p>각 후보의 "차이 자체"를 직접 검정했습니다. 예: (b)는 log(타 시도 금액 / 동일 시도 금액)을 종속변수로 두어, 계수가 곧 "비 온 날 방문객이 지역주민보다 얼마나 더 줄었나"가 되도록 했습니다.</p>
+        <div class="table-scroll"><table>
+          <thead><tr><th>후보</th><th>호우일 결과</th><th>판단</th></tr></thead>
+          <tbody>
+            <tr class="sig"><td><b>(b) 타 시도 vs 동일 시도</b></td><td>춘천: 비율 <b>−13.6% (p&lt;0.001)</b> / 강남: +2.1% (p=0.37)</td><td><span class="verdict ok">채택</span>지역 단위로 가장 뚜렷</td></tr>
+            <tr><td>(a) 레저·야외 vs 생활 업종</td><td>춘천: 레저 −23.4% vs 생활 −9.3% (p=0.030) / 강남: <b>반대 방향</b> (−0.5% vs −15.5%)</td><td><span class="verdict no">기각</span>지역마다 방향이 다르고, 분류를 결과를 본 뒤 정한 위험</td></tr>
+            <tr><td>(c) 호우일 시간대 쏠림</td><td>시간대 비중 변화 최대 ±4% (춘천 06~11시 −4.1%)</td><td><span class="verdict no">기각</span>전체 감소에 비해 작음</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small">(b)의 한계도 확인: 업종 단위로 쪼개면 호우일에 타 시도가 더 줄어든 업종은 춘천 54개 중 61%(부호검정 p=0.13)로 일관되지 않음 → 업종 구성보다 "먼 곳에서 오는 사람이 궂은 날 이동 자체를 미룬다"는 방문 행동 차이로 해석(추정).</p>
+      </li>
+      <li>
+        <h4>가설 B: "강남은 지하철·지하상가가 충격을 흡수한다"</h4>
+        <p>강남(지하철 6개 노선·약 30개 역, 강남역 지하상가 880m) vs 춘천(지하철 없음, 실외형 상권)이라는 그럴듯한 설명. 지역별 결과를 따로 보면 "강남은 유의하지 않고 춘천은 유의"라 그렇게 읽고 싶어집니다. 하지만 두 지역을 한 모형에 넣고 <b>차이 자체</b>를 상호작용항으로 검정했습니다.</p>
+        <div class="table-scroll"><table>
+          <thead><tr><th>항목</th><th class="num">효과</th><th class="num">p</th></tr></thead>
+          <tbody>
+            <tr><td>강남 호우 (기준)</td><td class="num">−13.0%</td><td class="num">0.040</td></tr>
+            <tr><td>춘천 호우 (총효과)</td><td class="num">−8.1%</td><td class="num">0.005</td></tr>
+            <tr class="sig"><td><b>지역 × 호우 상호작용</b></td><td class="num">+5.7%</td><td class="num"><b>0.399</b></td></tr>
+            <tr><td>지역 × 약한 비 상호작용</td><td class="num">+0.4%</td><td class="num">0.921</td></tr>
+            <tr><td>지역 × 폭염 상호작용</td><td class="num">−0.9%</td><td class="num">0.833</td></tr>
+          </tbody>
+        </table></div>
+        <p><span class="verdict no">기각</span>차이가 유의하지 않고, 점추정치는 오히려 강남이 더 큼(−13% vs −8%). "강남은 안전하다"는 지역 간 비교 주장은 하지 않기로 했고, 인프라 차이는 정성적 배경 설명으로만 사용</p>
+      </li>
+      <li>
+        <h4>최종 주장: 범위는 좁게, 근거는 단단하게</h4>
+        <p>"<b>춘천 안에서</b>, 호우일에 타 시도 방문객 소비가 동일 시도 거주자보다 약 3배 크게 준다" — 지역 간 비교가 아니라 한 지역 안의 고객 구성별 비교라서 더 좁지만 훨씬 단단한 주장입니다.</p>
+        <p><span class="verdict ok">채택</span>이를 일반화해 <b>"외지 방문객 매출 비중이 높은 상권 = 기후 취약 상권"</b>이라는 조작적 정의를 제안 (춘천 타 시도 매출 비중 21%)</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================================================ 11 -->
+<section id="robust">
+  <div class="wrap">
+    <div class="eyebrow">11 · Robustness</div>
+    <h2>강건성 검증: 기준을 바꿔도 결론이 유지되는가</h2>
+
+    <h3>① 호우 기준값 15 ~ 40mm (춘천)</h3>
+    <div class="table-scroll"><table>
+      <thead><tr><th class="num">기준</th><th class="num">호우일 수</th><th class="barhead">동일 시도</th><th class="barhead">타 시도</th><th class="num">격차</th></tr></thead>
+      <tbody>
+        <tr><td class="num">15mm</td><td class="num">22</td><td class="barcell"><span class="bar neg" style="width:35.2%"></span><b>−8.8%</b></td><td class="barcell"><span class="bar neg" style="width:74.4%"></span><b>−18.6%</b></td><td class="num">−9.8%p</td></tr>
+        <tr><td class="num">20mm</td><td class="num">20</td><td class="barcell"><span class="bar neg" style="width:35.6%"></span><b>−8.9%</b></td><td class="barcell"><span class="bar neg" style="width:76.0%"></span><b>−19.0%</b></td><td class="num">−10.1%p</td></tr>
+        <tr><td class="num">25mm</td><td class="num">19</td><td class="barcell"><span class="bar neg" style="width:36.0%"></span><b>−9.0%</b></td><td class="barcell"><span class="bar neg" style="width:74.8%"></span><b>−18.7%</b></td><td class="num">−9.7%p</td></tr>
+        <tr class="sig"><td class="num">30mm (기본)</td><td class="num">18</td><td class="barcell"><span class="bar neg" style="width:25.6%"></span><b>−6.4%</b></td><td class="barcell"><span class="bar neg" style="width:78.0%"></span><b>−19.5%</b></td><td class="num">−13.1%p</td></tr>
+        <tr><td class="num">35mm</td><td class="num">12</td><td class="barcell"><span class="bar neg" style="width:23.6%"></span><b>−5.9%</b></td><td class="barcell"><span class="bar neg" style="width:70.4%"></span><b>−17.6%</b></td><td class="num">−11.7%p</td></tr>
+        <tr><td class="num">40mm</td><td class="num">12</td><td class="barcell"><span class="bar neg" style="width:23.6%"></span><b>−5.9%</b></td><td class="barcell"><span class="bar neg" style="width:70.4%"></span><b>−17.6%</b></td><td class="num">−11.7%p</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small">모든 값 p &lt; 0.01. (이 점검은 폭염 변수를 빼고 약한 비 구간을 1~t mm로 다시 정의한 모형이라, 30mm 행의 −19.5%가 기본 결과 −19.1%와 소폭 다름)</p>
+    <figure>
+      <div class="frame"><img src="img/robustness_rain_threshold.png" alt="호우 기준별 동일 시도·타 시도 효과와 95% 신뢰구간" loading="lazy"></div>
+      <figcaption>음영 = 95% 신뢰구간. 기준을 높일수록 호우일 수가 줄어 구간이 넓어지지만, 타 시도가 항상 아래에 있다.</figcaption>
+    </figure>
+
+    <div class="grid2">
+      <div>
+        <h3>② 전일 강수 지연효과</h3>
+        <div class="table-scroll"><table style="min-width:0">
+          <thead><tr><th>대상</th><th class="num">당일 호우</th><th class="num">전일 호우</th></tr></thead>
+          <tbody>
+            <tr><td>동일 시도</td><td class="num">−6.3%***</td><td class="num">−0.7% (p=0.73)</td></tr>
+            <tr><td>타 시도</td><td class="num">−19.3%***</td><td class="num">−3.1% (p=0.46)</td></tr>
+            <tr><td>전체</td><td class="num">−8.7%***</td><td class="num">−1.2% (p=0.61)</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small">비의 영향은 당일에 그침. 변수를 추가해도 당일 효과가 원래 값과 거의 같음. *** p&lt;0.001</p>
+      </div>
+      <div>
+        <h3>③ 폭염 기준 30 ~ 35℃</h3>
+        <div class="table-scroll"><table style="min-width:0">
+          <thead><tr><th class="num">기준</th><th class="num">강남 (p)</th><th class="num">춘천 (p)</th></tr></thead>
+          <tbody>
+            <tr><td class="num">30℃</td><td class="num">−1.7% (0.67)</td><td class="num">−0.7% (0.72)</td></tr>
+            <tr><td class="num">31℃</td><td class="num">−1.1% (0.74)</td><td class="num">+1.8% (0.29)</td></tr>
+            <tr><td class="num">32℃</td><td class="num">+2.1% (0.43)</td><td class="num">+1.4% (0.43)</td></tr>
+            <tr><td class="num">33℃</td><td class="num">−0.4% (0.90)</td><td class="num">+0.4% (0.85)</td></tr>
+            <tr><td class="num">34℃</td><td class="num">+0.7% (0.80)</td><td class="num">+0.7% (0.75)</td></tr>
+            <tr><td class="num">35℃</td><td class="num">+1.7% (0.57)</td><td class="num">+3.8% (0.10)</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small">어느 기준에서도 유의하지 않음 → "폭염은 영향 없음" 결론도 강건.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 12 -->
+<section id="sk">
+  <div class="wrap">
+    <div class="eyebrow">12 · Supplementary</div>
+    <h2>보조 지표: SK 유동인구로 지역 성격 비교</h2>
+    <p class="lead">SK 데이터는 월 × 요일 평균 패턴이라 날짜별 실측이 아닙니다. 그래서 회귀 검정에는 쓰지 않고, "춘천은 여가·방문형, 강남은 직장·생활형"이라는 성격 차이를 보여줄 수 있는지 확인했습니다.</p>
+    <figure>
+      <div class="frame"><img src="img/pt_04_sk_flow_character.png" alt="시간대별 유동인구 곡선과 주말 비중 비교" loading="lazy"></div>
+      <figcaption>왼쪽: 시간대별 유동인구 비중 — 두 지역 곡선이 거의 같다(둘 다 17시 최대, 출근 08~09시 강남 10.7% vs 춘천 11.1%, 퇴근 18~19시 12.6% vs 12.5%). 오른쪽: 주말 비중 — 춘천 27.5% vs 강남 22.6%.</figcaption>
+    </figure>
+    <p><span class="verdict mid">지지 안 됨</span>예상했던 강남의 출퇴근 쌍봉 패턴이 없었고, 주말 비중만 방향이 맞되 약했습니다. 새로운 근거로 쓰지 않고 배경 지표로만 남겼습니다.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 13 -->
+<section id="conclusion">
+  <div class="wrap">
+    <div class="eyebrow">13 · Conclusion</div>
+    <h2>결론 · 시사점 · 한계</h2>
+
+    <figure>
+      <div class="frame"><img src="img/pt_02_visitor_local_main.png" alt="춘천 호우일: 외지 방문객 −20%, 지역주민 −6%" loading="lazy"></div>
+    </figure>
+
+    <h3>시사점</h3>
+    <div class="grid2">
+      <div class="card"><h4>지자체 · 관광공사</h4><p>가맹점 결제 데이터의 고객 거주지 비중만으로 별도 설문 없이 "상권 기후 취약도"를 저비용으로 모니터링</p></div>
+      <div class="card"><h4>카드사 · 금융</h4><p>업종·지역별 비 민감도를 소상공인 대상 날씨 연동 대출·보험 상품의 초기 리스크 근거로 활용</p></div>
+      <div class="card"><h4>관광지 소상공인</h4><p>호우 예보 시 방문객 대상 취소 유연화·실내 대체 프로그램으로 이탈 방어 <small>(데이터로 직접 검증한 처방은 아닌 합리적 추정)</small></p></div>
+      <div class="card"><h4>일반화</h4><p>"외지 방문객 매출 비중" 지표는 강남·춘천에 국한되지 않고 다른 관광도시에도 같은 방법으로 적용 가능</p></div>
+    </div>
+
+    <h3>한계</h3>
+    <ul class="tight">
+      <li>기상 관측소가 도시당 1곳 — 강남구는 약 10km 떨어진 종로구 관측소 값으로 대체</li>
+      <li>SK 유동인구는 월 × 요일 평균 패턴이라 일별 실측이 아님</li>
+      <li>비교 지역이 2곳뿐이라 지역 간 비교의 검정력에 한계 (실제로 지역 간 차이 검정은 유의하지 않았음)</li>
+      <li>'동일 시도' 기준이 강남(서울 전체)과 춘천(강원 전체)에서 비대칭</li>
+      <li>강수와 소비 감소의 관계는 연관성이며, 인과관계를 확정한 것은 아님</li>
+    </ul>
+
+    <h3>프로젝트에서 얻은 교훈</h3>
+    <ul class="tight">
+      <li><b>"효과 없음"도 의심한다</b> — 첫 결과를 그대로 받아들였다면 핵심 발견을 놓쳤다. 데이터 구성(세금·미분류 결제)을 들여다본 것이 결론을 바꿨다.</li>
+      <li><b>그럴듯한 이야기보다 직접 검정</b> — 지역별 결과를 따로 보고 "강남은 덜 줄었다"고 읽었지만, 차이 자체를 검정하자 근거가 없었다.</li>
+      <li><b>주장의 크기를 근거에 맞춘다</b> — 범위를 좁힌 주장이 더 설득력 있었다.</li>
+    </ul>
+
+    <h3>사용 기술</h3>
+    <div class="stack">
+      <span>Python</span><span>pandas</span><span>statsmodels</span><span>scipy</span><span>matplotlib</span><span>python-pptx</span><span>Git</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    기후위기 취약상권 영향 분석 · 2026 빅콘테스트 AI데이터분석 분야 출품 (개인 프로젝트)<br>
+    전체 코드: <a href="https://github.com/hyeonn31/bigcontest-2026">github.com/hyeonn31/bigcontest-2026</a> · 대회 제공 원본 데이터는 재배포 제한으로 저장소에 포함하지 않음
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement, btn = document.getElementById("themeBtn");
+  try { var saved = localStorage.getItem("theme"); if (saved) root.setAttribute("data-theme", saved); } catch (e) {}
+  btn.addEventListener("click", function () {
+    var dark = root.getAttribute("data-theme") ? root.getAttribute("data-theme") === "dark"
+      : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = dark ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("theme", next); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>
