@@ -1,3 +1,12 @@
+"""[7단계 · 시각화] 업종별 비 효과를 '업종 규모(하루 결제건수)'에 대해 산점도로 그린다.
+
+작은 업종일수록 효과 추정치가 위아래로 크게 흔들리는 '깔때기' 모양이 나타남
+→ 업종 단위 결과는 노이즈가 커서 개별 업종 순위로 결론 내기 어렵다는 근거.
+빨간 점 = FDR 보정 후에도 유의한 업종(q<0.1).
+
+입력: data/processed/industry_rain_effects.csv (industry_analysis.py 결과)
+출력: figures/industry_rain_effects.png
+"""
 import os
 import numpy as np
 import pandas as pd

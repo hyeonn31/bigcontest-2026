@@ -1,3 +1,12 @@
+"""[3단계 · 집계] SK 유동인구(격자 단위)를 '월 × 지역' 합계로 줄인다.
+
+격자 좌표 X가 X_SPLIT보다 작으면 강남, 크면 춘천으로 분류(explore_sk_regions.py에서 찾은 경계).
+연령별·시간대별·요일별 3종 파일을 각각 집계한다.
+SK는 일별 실측이 아니라 '월별 평균 패턴'이라는 점에 주의 (회귀 검정에는 쓰지 않음).
+
+입력: data/sk_flow_pop/flow_{age,time,wkdy}_pop_YYYYMM.csv (6개월 × 3종)
+출력: data/processed/sk_{age,time,wkdy}_region_month.csv, eda_output/aggregate_sk_log.txt
+"""
 import pandas as pd
 import glob
 import os
@@ -23,6 +32,7 @@ def aggregate(file_prefix, out_name):
         # 12월 time/wkdy 파일은 모든 행이 통째로 2번씩 들어 있음(값까지 동일) -> 중복 제거
         df = df.drop_duplicates()
         df['region'] = df['X_COORD'].apply(region_of)
+        # 좌표·키 컬럼을 뺀 나머지(연령대별/시간대별/요일별 인구 수)가 합산 대상
         value_cols = [c for c in df.columns if c not in ('STD_YM', 'BLOCK_CD', 'X_COORD', 'Y_COORD', 'region')]
         g = df.groupby(['STD_YM', 'region'])[value_cols].sum().reset_index()
         # 격자(block) 개수도 같이 남겨서, 이후 지역별 커버리지 확인 가능하게 함

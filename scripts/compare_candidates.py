@@ -1,4 +1,4 @@
-"""최종 분석 질문 후보 (a)(b)(c)를 같은 잣대로 비교한다.
+"""[7단계 · 본분석] 최종 분석 질문 후보 (a)(b)(c)를 같은 잣대로 비교한다.
 
 (a) 레저·야외 업종 vs 생활 업종의 비 민감도 차이
 (b) 타 시도 거주자 vs 동일 시도 거주자의 반응 차이
@@ -40,6 +40,7 @@ def fit(region, y):
     return fit_log(region, np.log(y))
 
 
+# (a) 레저 vs 생활 업종 평균 차이 검정에 사용. 레저 업종이 6개 정도로 적어서 t검정 대신 순열검정
 def perm_diff(a, b, n=N_PERM):
     """두 그룹 평균 차이의 순열검정 (업종 라벨을 섞음)"""
     a, b = np.asarray(a), np.asarray(b)
@@ -78,6 +79,7 @@ p(pd.DataFrame(rows).drop(columns=["heat_day_pct", "heat_day_p"]).round(3).to_st
 d2 = pd.read_csv(os.path.join(BASE, "data", "shinhan_card", "신한카드_빅콘테스트2026_데이터2_수정.txt"), sep="\t", encoding="utf-8-sig")
 d2["date"] = pd.to_datetime(d2["TA_YMD"].astype(str), format="%Y%m%d")
 core = d2[~d2["MCT_RY_CD"].isin(EXCL)].copy()
+# 타 시도 방문객 여부: 가맹점 시도('서울 강남구'의 '서울')와 고객 거주 시도가 다르면 True
 core["visitor"] = core["MCT_SGG_CD"].str.split(" ").str[0] != core["CLN_SGG_CD"]
 n_days = m["date"].nunique()
 
@@ -136,8 +138,10 @@ hol = m.drop_duplicates("date").set_index("date")["is_holiday"]
 ind = core.groupby(["MCT_SGG_CD", "MCT_RY_CD", "date"])["TS_AT"].sum().reset_index()
 ind["holiday"] = ind["date"].map(hol)
 ind = ind[ind["holiday"] == 0]
+# 공휴일을 뺀 뒤 토·일(dayofweek 5,6)을 주말로 봄
 ind["wkend"] = ind["date"].dt.dayofweek >= 5
 wr = ind.groupby(["MCT_SGG_CD", "MCT_RY_CD", "wkend"])["TS_AT"].mean().unstack("wkend")
+# 주말 하루 평균 소비 / 평일 하루 평균 소비. 1보다 클수록 주말형(여가형) 업종
 wr["weekend_ratio"] = wr[True] / wr[False]
 wr = wr["weekend_ratio"].rename_axis(["region", "industry"]).reset_index()
 e2 = eff.merge(wr, on=["region", "industry"], how="left")
@@ -159,6 +163,7 @@ for region in tb.index.get_level_values(0).unique():
     t = tb.loc[region]
     total = t.sum(axis=1)
     for band in t.columns:
+        # 그날 전체 중 이 시간대 비중의 로그 → 전체 감소분은 빠지고 '시간대 쏠림'만 남음
         r = fit_log(region, np.log(t[band] / total))
         rows.append({"region": region, "time": band, **r})
 p(pd.DataFrame(rows).drop(columns=["heat_day_pct", "heat_day_p"]).round(3).to_string(index=False))

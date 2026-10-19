@@ -1,3 +1,14 @@
+"""[7단계 · 본분석] 로그선형 회귀(HAC 표준오차)로 기후 효과를 지역·시간대·업종별로 추정한다.
+
+모형: log(소비금액) ~ 월 + 요일 + 공휴일 + 약한비 + 호우 + 폭염  (common.fit_hac)
+1. 지역 전체 핵심 소비 (전체 / 동일시도 거주자 / 타시도 거주자)
+2. 시간대별 (데이터1)
+3. 업종별 (데이터2) — 업종 수십 개를 동시에 검정하므로 FDR(Benjamini-Hochberg)로 보정
+   + '방문객 비중이 높은 업종일수록 비에 약한가' 스피어만 상관 (결론: 상관 없음)
+
+입력: data/processed/merged_daily.csv, 신한카드 원본 TXT 2개
+출력: eda_output/industry_analysis.txt, data/processed/industry_rain_effects.csv (업종별 결과표)
+"""
 import os
 import numpy as np
 import pandas as pd
@@ -67,6 +78,7 @@ p(pd.DataFrame(rows).round(3).to_string(index=False))
 d2 = pd.read_csv(os.path.join(BASE, "data", "shinhan_card", "신한카드_빅콘테스트2026_데이터2_수정.txt"), sep="\t", encoding="utf-8-sig")
 d2["date"] = pd.to_datetime(d2["TA_YMD"].astype(str), format="%Y%m%d")
 core = d2[~d2["MCT_RY_CD"].isin(EXCL)].copy()
+# 타 시도 방문객 여부: 가맹점 시도('서울 강남구'의 '서울')와 고객 거주 시도가 다르면 True
 core["visitor"] = core["MCT_SGG_CD"].str.split(" ").str[0] != core["CLN_SGG_CD"]
 
 p("\n" + "=" * 15, "3. 업종별", "=" * 15)
@@ -74,6 +86,7 @@ p("마스킹 진단: 결제건수 10건 미만 셀이 핵심 소비 금액에서
   round(core.loc[core["USE_CNT"] < 10, "TS_AT"].sum() / core["TS_AT"].sum(), 4))
 
 ind = core.groupby(["MCT_SGG_CD", "MCT_RY_CD", "date"])[["TS_AT", "USE_CNT"]].sum().reset_index()
+# 업종별 매출 중 타 시도 방문객 비중 (0~1)
 vis = core.groupby(["MCT_SGG_CD", "MCT_RY_CD"]).apply(lambda g: g.loc[g["visitor"], "TS_AT"].sum() / g["TS_AT"].sum(), include_groups=False)
 n_days = m["date"].nunique()
 
@@ -94,6 +107,8 @@ p("분석 포함 업종 수:", res.groupby("region").size().to_dict(), "/ 제외
 for t in TERMS:
     res[f"{t}_q"] = np.nan
     for region, idx in res.groupby("region").groups.items():
+        # FDR 보정: 업종 수십 개를 동시에 검정하면 우연히 p<0.05가 나오는 업종이 생김
+        # → 지역별로 p값들을 묶어 q값(거짓 발견 비율 기준)으로 보정. q<0.1만 '유의'로 봄
         res.loc[idx, f"{t}_q"] = multipletests(res.loc[idx, f"{t}_p"], method="fdr_bh")[1]
 res.round(4).to_csv(OUT_CSV, index=False, encoding="utf-8-sig")
 

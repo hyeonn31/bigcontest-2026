@@ -1,3 +1,11 @@
+"""[2단계 · 탐색] 신한카드 데이터2(고객 거주지별 소비)의 구조를 처음 훑어본다.
+
+데이터1과의 차이: 시간대(TIME_GB)는 없고, 대신 고객 거주지(CLN_SGG_CD, 시도 단위)가 있다.
+→ 이 컬럼으로 '지역주민 vs 외지 방문객'을 나눌 수 있어서, 최종 핵심 분석은 데이터2 기반.
+
+입력: data/shinhan_card/신한카드_빅콘테스트2026_데이터2_수정.txt
+출력: eda_output/eda_shinhan2_result.txt
+"""
 import pandas as pd
 import os
 

@@ -1,3 +1,12 @@
+"""[2단계 · 탐색] SK 유동인구 격자 좌표로 강남/춘천을 어떻게 나눌지 찾는다.
+
+SK 데이터에는 '지역명' 컬럼이 없고 격자(BLOCK_CD)와 좌표(X_COORD, Y_COORD)만 있다.
+두 지역은 지리적으로 멀리 떨어져 있으므로, 좌표를 정렬했을 때 값이 크게 '점프'하는
+지점(gap)이 곧 두 지역의 경계 → aggregate_sk_region_month.py의 X_SPLIT 값을 정하는 근거.
+
+입력: data/sk_flow_pop/flow_age_pop_202507.csv (7월 파일 하나로 확인)
+출력: eda_output/sk_region_explore.txt
+"""
 import pandas as pd
 import os
 

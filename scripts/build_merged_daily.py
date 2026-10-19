@@ -1,3 +1,13 @@
+"""[4단계 · 병합] 카드 소비 + 기상 + SK 유동인구를 '날짜 × 지역' 표 하나로 합친다.
+
+이후 모든 분석이 이 표(merged_daily.csv, 184일 × 2지역 = 368행)에서 출발한다.
+1. 기상 시간자료 → 일자료 (평균·최고·최저기온, 일강수량 등) + 기후 이벤트 플래그(폭염·호우 등)
+2. 신한카드 집계본들을 옆으로 붙임 (컬럼 접두어: s1_all, s1_cons, s2, s2c=핵심소비)
+3. SK 요일 패턴을 각 날짜의 요일에 대입 + 월·요일·공휴일 변수 추가
+
+입력: data/weather/OBS_ASOS_TIM_*.csv, data/processed/ 집계 CSV들
+출력: data/processed/weather_daily.csv, merged_daily.csv, eda_output/merge_log.txt
+"""
 import glob
 import os
 import pandas as pd

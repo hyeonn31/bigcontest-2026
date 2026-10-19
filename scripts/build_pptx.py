@@ -1,4 +1,4 @@
-"""PT_outline.md의 구조를 실제 PowerPoint 파일(.pptx)로 만든다.
+"""[11단계 · 발표자료] PT_outline.md의 구조를 실제 PowerPoint 파일(.pptx)로 만든다.
 
 python-pptx로 슬라이드를 코드로 생성 — 그래프(pt_*.png)를 그대로 삽입하고,
 텍스트는 PT_outline.md의 문장을 그대로 가져다 씀. 완성 후 PowerPoint에서 열어

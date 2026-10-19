@@ -1,3 +1,12 @@
+"""[2단계 · 탐색] 기상청 ASOS 시간자료(서울·춘천 관측소)의 품질을 점검한다.
+
+핵심 질문: 강수량 칸이 비어 있는 시각이 많은데, 이게 '비가 안 옴'인지 '측정 누락'인지.
+→ 기상청 QC플래그(품질 표시) 값별로 빈칸이 어떻게 분포하는지, 어느 날짜에 몰려 있는지 본다.
+(결론: 빈칸 = 강수 없음으로 처리. 추가 근거는 audit_checks.py C절, audit_checks2.py 3절)
+
+입력: data/weather/OBS_ASOS_TIM_20260918173259.csv
+출력: eda_output/weather_explore.txt
+"""
 import pandas as pd
 import os
 

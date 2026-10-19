@@ -1,3 +1,11 @@
+"""[2단계 · 탐색] 데이터1 결제금액(TS_AT) 분포를 '상위 1% 제외'로 확대해서 다시 본다.
+
+eda_shinhan1_plot.py의 보충: log 변환 없이 원본 단위로 보되, 극단값(상위 1%)을 빼면
+나머지 99%가 어떤 모양인지 확인한다. 왼쪽 = 전체, 오른쪽 = 99분위수까지만.
+
+입력: data/shinhan_card/신한카드_빅콘테스트2026_데이터1.txt
+출력: figures/ts_at_zoom.png
+"""
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')

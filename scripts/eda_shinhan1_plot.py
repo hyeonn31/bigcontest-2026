@@ -1,3 +1,11 @@
+"""[2단계 · 탐색] 데이터1 결제금액(TS_AT) 분포를 원본 스케일과 log10 스케일로 나란히 그린다.
+
+원본 스케일에서는 소수의 거액 결제 때문에 대부분의 값이 0 근처에 몰려 보이지 않는다.
+log를 취하면 분포가 종 모양에 가까워짐 → 이후 회귀에서 log(금액)을 종속변수로 쓰는 근거.
+
+입력: data/shinhan_card/신한카드_빅콘테스트2026_데이터1.txt
+출력: figures/ts_at_distribution.png
+"""
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')

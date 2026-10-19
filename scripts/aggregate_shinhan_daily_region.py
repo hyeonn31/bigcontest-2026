@@ -1,3 +1,12 @@
+"""[3단계 · 집계] 업종·성별·연령별로 잘게 쪼개진 신한카드 원본을 '날짜 × 지역' 단위 합계로 줄인다.
+
+분석 단위가 '하루 × 지역'이므로, 업종·성별·연령으로 쪼개진 행을 합쳐서 여러 버전을 만든다.
+- 데이터1: 법인 포함 전체 / 법인 제외(개인 소비만)
+- 데이터2: 전체 / 지역주민·외부방문객 구분 / 핵심 소비(세금공과금·ZZ_나머지 제외) 버전
+
+입력: data/shinhan_card/ 원본 TXT 2개
+출력: data/processed/shinhan1_*.csv, shinhan2_*.csv (6개), eda_output/aggregate_shinhan_log.txt
+"""
 import pandas as pd
 import os
 
