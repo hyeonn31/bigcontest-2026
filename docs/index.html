@@ -89,6 +89,9 @@ figure img { display: block; width: 100%; height: auto; }
 figcaption { font-size: .88rem; color: var(--muted); margin-top: 10px; line-height: 1.6; }
 .figpair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+.code { margin: 14px 0 18px; }
+.code .codehead { font-size: .78rem; color: var(--muted); font-family: Consolas, monospace; background: var(--code-bg); border: 1px solid var(--line); border-bottom: none; border-radius: 12px 12px 0 0; padding: 6px 16px; }
+.code pre { margin: 0; border-radius: 0 0 12px 12px; }
 pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font-size: .84rem; line-height: 1.6; margin: 14px 0 18px; }
 code { font-family: "D2Coding", Consolas, monospace; }
 p code, li code, td code { background: var(--code-bg); padding: 1px 6px; border-radius: 5px; font-size: .88em; }
@@ -219,13 +222,28 @@ footer { padding: 40px 0 56px; color: var(--muted); font-size: .88rem; border-to
       <div class="card"><span class="big">82,868개</span><p>춘천시 격자 (X 1,000,584 ~ 1,043,384)</p></div>
       <div class="card"><span class="big">≈ 38 km²</span><p>강남 격자 15,261 × 0.0025 km² — 실제 면적 39.5 km²와 일치해 매핑 검증</p></div>
     </div>
+    <div class="code"><div class="codehead">scripts/aggregate_sk_region_month.py · 발췌</div><pre><code>X_SPLIT = 983000  # 좌표 정렬 시 값이 크게 점프하는 지점 = 두 지역의 경계
+
+def region_of(x):
+    return &#x27;서울 강남구&#x27; if x &lt; X_SPLIT else &#x27;강원 춘천시&#x27;
+
+df = df.drop_duplicates()                  # 12월 파일의 통째 중복 행 제거
+df[&#x27;region&#x27;] = df[&#x27;X_COORD&#x27;].apply(region_of)
+value_cols = [c for c in df.columns if c not in (&#x27;STD_YM&#x27;, &#x27;BLOCK_CD&#x27;, &#x27;X_COORD&#x27;, &#x27;Y_COORD&#x27;, &#x27;region&#x27;)]
+g = df.groupby([&#x27;STD_YM&#x27;, &#x27;region&#x27;])[value_cols].sum().reset_index()</code></pre></div>
 
     <h3>② 기상 시간자료 → 일자료</h3>
     <p>기상청 관례상 하루는 01시~24시(다음날 00시)입니다. 그래서 관측 시각에서 1시간을 빼 날짜를 정했고, 이를 놓쳐 12/31이 빠졌던 것을 찾아 추가 수집했습니다. 일 단위로 기온(평균·최고·최저), 강수량 합계 등을 집계하고 기후 이벤트 플래그를 만들었습니다.</p>
-<pre><code>w["date"] = (w["dt"] - pd.Timedelta(hours=1)).dt.normalize()   # 00:00 관측치는 전날에 속함
-weather["heat_day"]       = weather["temp_max"]   >= 33   # 폭염
-weather["rain_day"]       = weather["precip_sum"] >= 1    # 강수일
-weather["heavy_rain_day"] = weather["precip_sum"] >= 30   # 호우</code></pre>
+<div class="code"><div class="codehead">scripts/build_merged_daily.py · 발췌</div><pre><code>w = w.drop_duplicates([&quot;지점&quot;, &quot;일시&quot;])                         # 나눠 받은 파일의 겹치는 시각 제거
+w[&quot;date&quot;] = (w[&quot;dt&quot;] - pd.Timedelta(hours=1)).dt.normalize()     # 01~24시가 하루 (00시는 전날)
+w[&quot;precip&quot;] = w[&quot;강수량(mm)&quot;].fillna(0)                          # 빈칸 = 강수 없음 (QC 검증 후 가정)
+
+weather = w.groupby([&quot;region&quot;, &quot;date&quot;]).agg(
+    temp_max=(&quot;기온(°C)&quot;, &quot;max&quot;), temp_min=(&quot;기온(°C)&quot;, &quot;min&quot;),
+    precip_sum=(&quot;precip&quot;, &quot;sum&quot;), n_hours=(&quot;dt&quot;, &quot;count&quot;),
+).reset_index()
+weather[&quot;heat_day&quot;]       = weather[&quot;temp_max&quot;]   &gt;= 33   # 폭염
+weather[&quot;heavy_rain_day&quot;] = weather[&quot;precip_sum&quot;] &gt;= 30   # 호우</code></pre></div>
     <div class="table-scroll"><table>
       <thead><tr><th>기후 이벤트</th><th>기준</th><th class="num">강남구 일수</th><th class="num">춘천시 일수</th></tr></thead>
       <tbody>
@@ -238,8 +256,16 @@ weather["heavy_rain_day"] = weather["precip_sum"] >= 30   # 호우</code></pre>
 
     <h3>③ 카드 데이터 집계 · 방문객 구분</h3>
     <p>데이터②의 고객 거주지(시도)와 가맹점 시도를 비교해 <b>동일 시도 거주자 / 타 시도 방문객</b>을 나눴습니다. 강남구의 '동일 시도'는 서울 전체(매출의 37.1%), 춘천시는 강원 전체(79.0%)라 기준이 비대칭이라는 점은 해석 시 주의했습니다.</p>
-<pre><code>core["visitor"] = core["MCT_SGG_CD"].str.split(" ").str[0] != core["CLN_SGG_CD"]
-# '서울 강남구'의 '서울'과 고객 거주 시도가 다르면 타 시도 방문객</code></pre>
+<div class="code"><div class="codehead">scripts/aggregate_shinhan_daily_region.py · 발췌</div><pre><code># 세금공과금(28%)·미분류(22%)는 상권 소비가 아니고 소수 거액 결제가 일 합계를 좌우 → 제외
+CORE_EXCLUDE = [&#x27;세금공과금&#x27;, &#x27;ZZ_나머지&#x27;]
+df2_core = df2[~df2[&#x27;MCT_RY_CD&#x27;].isin(CORE_EXCLUDE)]
+
+def local_flag(row):                       # 가맹점 시도 == 고객 거주 시도 → 지역주민
+    mct_sido = row[&#x27;MCT_SGG_CD&#x27;].split(&#x27; &#x27;)[0]           # &#x27;서울 강남구&#x27; → &#x27;서울&#x27;
+    cln = row[&#x27;CLN_SGG_CD&#x27;]
+    return &#x27;지역주민&#x27; if mct_sido == cln else (&#x27;정보없음&#x27; if cln == &#x27;정보없음&#x27; else &#x27;외부방문객&#x27;)
+
+df2[&#x27;visitor_type&#x27;] = df2.apply(local_flag, axis=1)</code></pre></div>
 
     <h3>④ 병합 결과</h3>
     <p>카드(5개 집계본) + 기상 + SK 기준선 + 월·요일·공휴일 변수를 붙여 <code>merged_daily.csv</code> <b>368행(184일 × 2지역)</b>을 만들었고, 이후 모든 분석이 이 표에서 출발합니다. 공휴일(8/15, 10/3~10/9 추석 연휴, 12/25)은 검색으로 확인해 플래그로 넣었습니다.</p>
@@ -346,6 +372,15 @@ weather["heavy_rain_day"] = weather["precip_sum"] >= 30   # 호우</code></pre>
         <tr><td>강남</td><td>폭염</td><td>전체</td><td class="num">24</td><td class="barcell"><span class="bar pos" style="width:11.5%"></span><b>+2.3%p</b></td><td class="num">0.47</td><td class="num">0.54</td></tr>
       </tbody>
     </table></div>
+    <div class="code"><div class="codehead">scripts/permutation_check.py · 발췌</div><pre><code># 소비 지수 = 당일 소비 / 같은 (지역, 월, 요일) 평균
+m[col + &quot;_idx&quot;] = m[col] / m.groupby([&quot;region&quot;, &quot;month&quot;, &quot;weekday&quot;])[col].transform(&quot;mean&quot;)
+
+obs = x[f].mean() - x[~f].mean()           # 실제 차이: 이벤트일 평균 - 나머지 날 평균
+perm = np.empty(N)
+for i in range(N):                         # 날짜를 섞어 k일을 &#x27;가짜 이벤트일&#x27;로 뽑기를 N=10,000번
+    ix = rng.permutation(len(x))
+    perm[i] = x[ix[:k]].mean() - x[ix[k:]].mean()
+p_value = (np.abs(perm) &gt;= abs(obs)).mean()   # 우연히 이만큼 극단적일 확률</code></pre></div>
     <p>춘천은 비가 오면 소비가 뚜렷하게 줄고 특히 타 시도 방문객이 크게 줄었습니다. 강남은 공휴일을 빼면 신호가 사라졌습니다. 폭염은 두 지역 모두 영향이 없었습니다.</p>
     <div class="note">한계: 순열검정은 날짜를 서로 독립으로 가정하는데 비는 며칠씩 이어집니다(자기상관 → p값 과소). 공휴일 같은 다른 요인도 함께 통제하지 못하고, 검정 48개를 동시에 돌렸습니다. → 다음 단계에서 회귀 모형으로 보완</div>
   </div>
@@ -366,7 +401,7 @@ weather["heavy_rain_day"] = weather["precip_sum"] >= 30   # 호우</code></pre>
       <div class="card"><h4>상호작용항</h4><p>"두 그룹의 반응이 다른가"는 각자 유의한지가 아니라 차이 자체를 검정해야 함 → 지역 × 기후 상호작용항</p></div>
     </div>
     <p style="margin-top:18px">모든 검정이 같은 틀을 쓰도록 공통 함수로 만들어, 스크립트마다 넣는 변수만 바꿔 재사용했습니다.</p>
-<pre><code>def fit_hac(g, y, terms):
+<div class="code"><div class="codehead">scripts/common.py</div><pre><code>def fit_hac(g, y, terms):
     """y(이미 로그) ~ 월+요일 더미 + g[terms], HAC(3일)"""
     X = pd.get_dummies(g[["month", "weekday"]].astype(str), drop_first=True, dtype=float)
     for c in terms:
@@ -378,7 +413,7 @@ def pct_ci(res, term):
     """로그 계수 → (효과%, 95% 하한%, 상한%, p값)"""
     coef, se = res.params[term], res.bse[term]
     to_pct = lambda b: (np.exp(b) - 1) * 100
-    return to_pct(coef), to_pct(coef - 1.96 * se), to_pct(coef + 1.96 * se), res.pvalues[term]</code></pre>
+    return to_pct(coef), to_pct(coef - 1.96 * se), to_pct(coef + 1.96 * se), res.pvalues[term]</code></pre></div>
   </div>
 </section>
 
@@ -400,6 +435,14 @@ def pct_ci(res, term):
       </tbody>
     </table></div>
 
+    <div class="code"><div class="codehead">scripts/plot_visitor_local_rain_effect.py · 발췌</div><pre><code>CUSTOMER_COLS = {&quot;동일 시도 거주자&quot;: &quot;s2c_local_amt&quot;, &quot;타 시도 거주자&quot;: &quot;s2c_visitor_amt&quot;}
+
+for region, g in m.groupby(&quot;region&quot;):
+    g = g.set_index(&quot;date&quot;).sort_index()
+    for cust, col in CUSTOMER_COLS.items():
+        res = fit_hac(g, np.log(g[col]), [&quot;is_holiday&quot;, &quot;rain_light&quot;, &quot;rain_heavy&quot;, &quot;heat_day&quot;])
+        for term in [&quot;rain_light&quot;, &quot;rain_heavy&quot;]:
+            results[(region, cust, term)] = pct_ci(res, term)   # (효과%, 95% 하한, 상한, p)</code></pre></div>
     <figure>
       <div class="frame"><img src="img/region_rain_effect_ci.png" alt="지역별 비 효과와 95% 신뢰구간" loading="lazy"></div>
       <figcaption>지역 전체 비 효과와 95% 신뢰구간. 강남 호우 −11.0%는 신뢰구간(−21.6 ~ +0.9%)이 0을 포함해 불확실하고, 춘천 −8.6%(−12.0 ~ −5.1%)는 유의하다.</figcaption>
@@ -441,6 +484,17 @@ def pct_ci(res, term):
     <h2>업종별: 145개 업종을 동시에 검정</h2>
     <p class="lead">일별 커버리지 95% 이상 + 하루 평균 30건 이상인 업종만 포함했습니다(춘천 64개, 강남 81개). FDR 보정 후 q &lt; 0.1인 업종만 '유의'로 봤습니다.</p>
 
+    <div class="code"><div class="codehead">scripts/industry_analysis.py · 발췌</div><pre><code>for (region, name), g in ind.groupby([&quot;MCT_SGG_CD&quot;, &quot;MCT_RY_CD&quot;]):
+    cov = g[&quot;date&quot;].nunique() / n_days      # 184일 중 데이터가 있는 날 비율 (마스킹으로 빠진 날)
+    if cov &lt; 0.95 or g[&quot;USE_CNT&quot;].mean() &lt; 30:
+        continue                            # 커버리지·건수 부족 업종은 제외
+    rows.append({&quot;region&quot;: region, &quot;industry&quot;: name, **fit(region, g.set_index(&quot;date&quot;)[&quot;TS_AT&quot;])})
+res = pd.DataFrame(rows)
+
+# FDR 보정: 업종 수십 개를 동시에 검정하면 우연히 p&lt;0.05인 업종이 섞임 → 지역별로 q값 계산
+for t in [&quot;rain_light&quot;, &quot;rain_heavy&quot;, &quot;heat_day&quot;]:
+    for region, idx in res.groupby(&quot;region&quot;).groups.items():
+        res.loc[idx, f&quot;{t}_q&quot;] = multipletests(res.loc[idx, f&quot;{t}_p&quot;], method=&quot;fdr_bh&quot;)[1]</code></pre></div>
     <figure>
       <div class="frame"><img src="img/industry_rain_effects.png" alt="업종별 강수 효과 산점도 — 업종 규모가 작을수록 값이 크게 흔들리는 깔때기 모양" loading="lazy"></div>
       <figcaption>가로축 = 업종 규모(하루 평균 결제건수, log), 세로축 = 비 효과. 빨간 점 = FDR 통과. 작은 업종일수록 값이 크게 흔들리는 '깔때기' 모양이고, 하루 1만 건 이상인 큰 업종은 거의 전부 0 아래에 모인다 → 큰 생활 업종에서도 비의 영향이 체계적으로 나타남.</figcaption>
@@ -699,6 +753,10 @@ def pct_ci(res, term):
             <tr><td>(c) 호우일 시간대 쏠림</td><td>시간대 비중 변화 최대 ±4% (춘천 06~11시 −4.1%)</td><td><span class="verdict no">기각</span>전체 감소에 비해 작음</td></tr>
           </tbody>
         </table></div>
+        <div class="code"><div class="codehead">scripts/compare_candidates.py · 발췌</div><pre><code># 후보 (b): 두 그룹의 &#x27;차이 자체&#x27;를 종속변수로 → 계수 = 비 온 날 방문객이 주민보다 얼마나 &#x27;더&#x27; 줄었나
+for region, g in m.groupby(&quot;region&quot;):
+    g = g.set_index(&quot;date&quot;).sort_index()
+    r = fit_log(region, np.log(g[&quot;s2c_visitor_amt&quot;]) - np.log(g[&quot;s2c_local_amt&quot;]))</code></pre></div>
         <p class="small">(b)의 한계도 확인: 업종 단위로 쪼개면 호우일에 타 시도가 더 줄어든 업종은 춘천 54개 중 61%(부호검정 p=0.13)로 일관되지 않음 → 업종 구성보다 "먼 곳에서 오는 사람이 궂은 날 이동 자체를 미룬다"는 방문 행동 차이로 해석(추정).</p>
       </li>
       <li>
@@ -714,6 +772,17 @@ def pct_ci(res, term):
             <tr><td>지역 × 폭염 상호작용</td><td class="num">−0.9%</td><td class="num">0.833</td></tr>
           </tbody>
         </table></div>
+        <div class="code"><div class="codehead">scripts/region_interaction_test.py · 발췌</div><pre><code># 두 지역을 한 모형에 넣고, 지역 × 기후 상호작용항으로 &#x27;반응 차이&#x27;를 직접 검정 (기준 = 강남)
+m = load_merged().sort_values([&quot;region&quot;, &quot;date&quot;]).reset_index(drop=True)
+m[&quot;region_cc&quot;] = (m[&quot;region&quot;] == &quot;강원 춘천시&quot;).astype(float)
+terms = [&quot;is_holiday&quot;, &quot;region_cc&quot;]
+for t in [&quot;rain_light&quot;, &quot;rain_heavy&quot;, &quot;heat_day&quot;]:
+    m[f&quot;region_cc_x_{t}&quot;] = m[&quot;region_cc&quot;] * m[t]
+    terms += [t, f&quot;region_cc_x_{t}&quot;]
+res = fit_hac(m, np.log(m[&quot;s2c_amt&quot;]), terms)
+
+# 춘천의 총 효과 = 강남 계수 + 상호작용 (선형결합 검정)
+tt = res.t_test(&quot;rain_heavy + region_cc_x_rain_heavy = 0&quot;)</code></pre></div>
         <p><span class="verdict no">기각</span>차이가 유의하지 않고, 점추정치는 오히려 강남이 더 큼(−13% vs −8%). "강남은 안전하다"는 지역 간 비교 주장은 하지 않기로 했고, 인프라 차이는 정성적 배경 설명으로만 사용</p>
       </li>
       <li>
@@ -731,6 +800,17 @@ def pct_ci(res, term):
     <div class="eyebrow">11 · Robustness</div>
     <h2>강건성 검증: 기준을 바꿔도 결론이 유지되는가</h2>
 
+    <div class="code"><div class="codehead">scripts/robustness_rain_threshold.py · robustness_lag_effect.py · 발췌</div><pre><code># ① 호우 기준값을 바꿔가며 같은 회귀를 반복
+for t in [15, 20, 25, 30, 35, 40]:
+    gt = g.assign(rain_mid=(g[&quot;precip_sum&quot;] &gt;= 1) &amp; (g[&quot;precip_sum&quot;] &lt; t),
+                  rain_heavy=g[&quot;precip_sum&quot;] &gt;= t)
+    for cust, col in CUSTOMER_COLS.items():
+        res = fit_hac(gt, np.log(gt[col]), [&quot;is_holiday&quot;, &quot;rain_mid&quot;, &quot;rain_heavy&quot;])
+        pct, lo, hi, pv = pct_ci(res, &quot;rain_heavy&quot;)
+
+# ② 전날 호우 변수를 추가해 지연효과 확인
+g[&quot;rain_heavy_lag1&quot;] = g[&quot;rain_heavy&quot;].shift(1)
+res = fit_hac(gg, np.log(gg[col]), [&quot;is_holiday&quot;, &quot;rain_light&quot;, &quot;rain_heavy&quot;, &quot;rain_heavy_lag1&quot;])</code></pre></div>
     <h3>① 호우 기준값 15 ~ 40mm (춘천)</h3>
     <div class="table-scroll"><table>
       <thead><tr><th class="num">기준</th><th class="num">호우일 수</th><th class="barhead">동일 시도</th><th class="barhead">타 시도</th><th class="num">격차</th></tr></thead>
