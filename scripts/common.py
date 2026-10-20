@@ -13,13 +13,11 @@ HEAVY_MM = 30  # 호우 기준: 일 강수량 30mm 이상
 
 
 def load_merged():
-    """merged_daily.csv + 기후 플래그(float). 약한 비 = 1~30mm, 호우 = 30mm+"""
+    """merged_daily.csv + 비 플래그. 약한 비 = 1~30mm, 호우 = 30mm+ (bool·float 형 변환은 fit_hac이 처리)"""
     m = pd.read_csv(os.path.join(BASE, "data", "processed", "merged_daily.csv"),
                     encoding="utf-8-sig", parse_dates=["date"])
     m["rain_light"] = ((m["precip_sum"] >= 1) & (m["precip_sum"] < HEAVY_MM)).astype(float)
     m["rain_heavy"] = (m["precip_sum"] >= HEAVY_MM).astype(float)
-    m["heat_day"] = m["heat_day"].astype(float)
-    m["is_holiday"] = m["is_holiday"].astype(float)
     return m
 
 

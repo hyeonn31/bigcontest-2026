@@ -2,7 +2,7 @@
 
 행·열 수, 결측치, 날짜 범위, 범주형 컬럼(시간대·지역·업종·성별·연령) 값 분포,
 금액·건수 기술통계, '법인' 행 개수를 텍스트로 기록한다.
-→ 여기서 금액(TS_AT)이 오른쪽으로 크게 치우친 분포임을 확인 → eda_shinhan1_plot*.py로 시각화
+→ 여기서 금액(TS_AT)이 오른쪽으로 크게 치우친 분포임을 확인 → eda_shinhan1_plot.py로 시각화
 
 입력: data/shinhan_card/신한카드_빅콘테스트2026_데이터1.txt
 출력: eda_output/eda_shinhan1_result.txt

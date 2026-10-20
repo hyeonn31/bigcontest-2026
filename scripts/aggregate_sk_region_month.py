@@ -54,7 +54,7 @@ for prefix, out_name in [
     result, out_path = aggregate(prefix, out_name)
     results_log.append((out_name, out_path, result.shape))
 
-log_path = os.path.join(BASE + r"\eda_output", 'aggregate_sk_log.txt')
+log_path = os.path.join(BASE, "eda_output", "aggregate_sk_log.txt")
 with open(log_path, 'w', encoding='utf-8') as f:
     for out_name, out_path, shape in results_log:
         f.write(f"{out_name} -> {out_path}  shape={shape}\n")

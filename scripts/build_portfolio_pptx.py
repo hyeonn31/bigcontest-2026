@@ -91,13 +91,11 @@ def code_slide(eyebrow, title, panels):
         tf.word_wrap = False
         for j, line in enumerate(src.splitlines()):
             p = tf.paragraphs[0] if j == 0 else tf.add_paragraph()
-            p.text = line if line else " "
+            p.text = line or " "
             p.line_spacing = 1.1
+            color = RGBColor(0x8F, 0xBC, 0x8F) if line.lstrip().startswith("#") else RGBColor(0xE6, 0xE6, 0xE6)
             for r in p.runs:
-                is_comment = line.lstrip().startswith("#")
-                r.font.size, r.font.name = Pt(11.5), "Consolas"
-                r.font.color.rgb = RGBColor(0x8F, 0xBC, 0x8F) if is_comment else RGBColor(0xE6, 0xE6, 0xE6)
-    return s
+                r.font.size, r.font.name, r.font.color.rgb = Pt(11.5), "Consolas", color
 
 
 # ---------------- 표지 ----------------
@@ -245,16 +243,10 @@ steps = [
 ]
 top = 1.8
 for i, (title, desc, verdict, vcolor) in enumerate(steps, 1):
-    circ = box(s, 0.7, top + 0.05, 0.5, 0.5, fill=DARK, line=None, shape=MSO_SHAPE.OVAL)
-    circ.text_frame.text = str(i)
-    r = circ.text_frame.paragraphs[0].runs[0]
-    r.font.size, r.font.bold, r.font.color.rgb, r.font.name = Pt(14), True, WHITE, FONT
-    circ.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
-    tag = box(s, 1.5, top + 0.08, 0.8, 0.42, fill=WHITE, line=vcolor)
-    tag.text_frame.text = verdict
-    r = tag.text_frame.paragraphs[0].runs[0]
-    r.font.size, r.font.bold, r.font.color.rgb, r.font.name = Pt(12), True, vcolor, FONT
-    tag.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    box(s, 0.7, top + 0.05, 0.5, 0.5, fill=DARK, line=None, shape=MSO_SHAPE.OVAL)
+    text(s, 0.7, top + 0.05, 0.5, 0.5, str(i), size=14, bold=True, color=WHITE, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+    box(s, 1.5, top + 0.08, 0.8, 0.42, fill=WHITE, line=vcolor)
+    text(s, 1.5, top + 0.08, 0.8, 0.42, verdict, size=12, bold=True, color=vcolor, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
     text(s, 2.5, top, 10.2, 0.45, title, size=16, bold=True)
     text(s, 2.5, top + 0.45, 10.2, 0.5, desc, size=13, color=GRAY)
     top += 1.02

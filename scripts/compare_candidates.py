@@ -34,12 +34,6 @@ def fit_log(region, ylog):
     return out
 
 
-def fit(region, y):
-    y = y.dropna()
-    y = y[y > 0]
-    return fit_log(region, np.log(y))
-
-
 # (a) 레저 vs 생활 업종 평균 차이 검정에 사용. 레저 업종이 6개 정도로 적어서 t검정 대신 순열검정
 def perm_diff(a, b, n=N_PERM):
     """두 그룹 평균 차이의 순열검정 (업종 라벨을 섞음)"""
