@@ -6,7 +6,7 @@
 
 - 분석 지역: 서울 강남구 vs 강원 춘천시 · 기간: 2025-07-01 ~ 12-31 (184일)
 - 방법: 로그선형 회귀(OLS) + HAC 표준오차, FDR 다중검정 보정, 상호작용항, 강건성 점검
-- 📄 **전체 분석 결과 웹 페이지**: https://hyeonn31.github.io/bigcontest-2026/ · 📊 [포트폴리오 슬라이드](Portfolio_slides.pptx) · 📝 [상세 보고서](REPORT.md)
+- 📄 **전체 분석 결과 웹 페이지**: https://hyeonn31.github.io/bigcontest-2026/ · 📊 [포트폴리오 슬라이드 (PDF)](Portfolio_slides.pdf) ([PPTX 다운로드](https://github.com/hyeonn31/bigcontest-2026/raw/main/Portfolio_slides.pptx)) · 📝 [상세 보고서](REPORT.md)
 
 </br>
 
